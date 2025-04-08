@@ -2,29 +2,6 @@ import axios from 'axios';
 
 const BASE_URL = '/api';
 
-// Helper function to create JSONP request
-const jsonp = (url) => {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    const callbackName = `jsonp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    window[callbackName] = (data) => {
-      delete window[callbackName];
-      document.body.removeChild(script);
-      resolve(data);
-    };
-
-    script.onerror = () => {
-      delete window[callbackName];
-      document.body.removeChild(script);
-      reject(new Error('JSONP request failed'));
-    };
-
-    script.src = `${url}${url.includes('?') ? '&' : '?'}callback=${callbackName}`;
-    document.body.appendChild(script);
-  });
-};
-
 export const searchArtists = async (query) => {
   try {
     const response = await axios.get(`${BASE_URL}/search/artist?q=${query}`);
@@ -71,6 +48,26 @@ export const searchTracks = async (query) => {
     return response.data;
   } catch (error) {
     console.error('Error searching tracks:', error);
+    throw error;
+  }
+};
+
+export const getTopTracks = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/chart/0/tracks`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting top tracks:', error);
+    throw error;
+  }
+};
+
+export const getTopPlaylists = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/chart/0/playlists`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting top playlists:', error);
     throw error;
   }
 }; 
