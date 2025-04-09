@@ -22,7 +22,7 @@ const Navbar = () => {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              Deezer Music
+              PH Music
             </Typography>
           </Box>
           <Box sx={{ flexGrow: 1, display: 'flex', gap: 2 }}>

@@ -11,12 +11,16 @@ import {
   CircularProgress,
   Button,
   Chip,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
-import { searchArtists, getTopTracks, getTopPlaylists } from '../services/deezerApi';
+import { searchArtists, getTopTracks, getTopPlaylists, getTrackPreview } from '../services/deezerApi';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import AlbumIcon from '@mui/icons-material/Album';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
+import PreviewIcon from '@mui/icons-material/PlayCircleOutline';
+import stateManager from '../services/StateManager';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -25,6 +29,8 @@ const Home = () => {
   const [featuredArtists, setFeaturedArtists] = useState([]);
   const [topTracks, setTopTracks] = useState([]);
   const [topPlaylists, setTopPlaylists] = useState([]);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,6 +56,26 @@ const Home = () => {
 
     fetchData();
   }, []);
+
+  const handlePlayTrack = (track) => {
+    stateManager.playTrack(track);
+  };
+
+  const handlePreviewTrack = async (track) => {
+    try {
+      if (currentlyPlaying === track.id) {
+        setCurrentlyPlaying(null);
+        setPreviewUrl(null);
+        return;
+      }
+
+      const preview = await getTrackPreview(track.id);
+      setPreviewUrl(preview);
+      setCurrentlyPlaying(track.id);
+    } catch (error) {
+      console.error('Error playing preview:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -93,7 +119,7 @@ const Home = () => {
   }
 
   return (
-    <Box sx={{ width: '100%', minHeight: '100vh', py: 4 }}>
+    <Box sx={{ width: '100%', minHeight: '100vh', py: 4, pb: 10 }}>
       {/* Hero Section */}
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 8 }}>
         <Paper
@@ -132,7 +158,7 @@ const Home = () => {
                   fontWeight: 700,
                 }}
               >
-                Deezer Music
+                PH Music
               </Typography>
             </Box>
             <Typography variant="h5" color="text.secondary" sx={{ mb: 3, maxWidth: '600px' }}>
@@ -238,9 +264,25 @@ const Home = () => {
                   sx={{ objectFit: 'cover' }}
                 />
                 <CardContent>
-                  <Typography gutterBottom variant="h6" component="div" noWrap>
-                    {track.title}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography gutterBottom variant="h6" component="div" noWrap sx={{ flex: 1 }}>
+                      {track.title}
+                    </Typography>
+                    <Tooltip title="Preview">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePreviewTrack(track);
+                        }}
+                        sx={{
+                          color: currentlyPlaying === track.id ? 'primary.main' : 'inherit',
+                        }}
+                      >
+                        <PreviewIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                   <Typography variant="body2" color="text.secondary" noWrap>
                     {track.artist.name}
                   </Typography>
@@ -270,12 +312,14 @@ const Home = () => {
           {topPlaylists.map((playlist) => (
             <Grid item xs={12} sm={6} md={3} key={playlist.id}>
               <Card
+                onClick={() => navigate(`/playlist/${playlist.id}`)}
                 sx={{
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
                   background: 'linear-gradient(to bottom, #1A1A1A, #000000)',
                   transition: 'transform 0.2s ease-in-out',
+                  cursor: 'pointer',
                   '&:hover': {
                     transform: 'scale(1.02)',
                   },
@@ -295,19 +339,38 @@ const Home = () => {
                   <Typography variant="body2" color="text.secondary">
                     {playlist.nb_tracks} tracks
                   </Typography>
-                  <Box sx={{ mt: 1 }}>
-                    <Chip
-                      size="small"
-                      label={`${playlist.user.name}`}
-                      sx={{ background: 'rgba(255,255,255,0.1)' }}
-                    />
-                  </Box>
                 </CardContent>
               </Card>
             </Grid>
           ))}
         </Grid>
       </Box>
+
+      {/* Footer */}
+      <Box
+        sx={{
+          mt: 8,
+          py: 4,
+          textAlign: 'center',
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+        }}
+      >
+        <Typography variant="body2" color="text.secondary">
+          Powered by Deezer API
+        </Typography>
+      </Box>
+
+      {previewUrl && (
+        <audio
+          src={previewUrl}
+          autoPlay
+          onEnded={() => {
+            setCurrentlyPlaying(null);
+            setPreviewUrl(null);
+          }}
+          style={{ display: 'none' }}
+        />
+      )}
     </Box>
   );
 };

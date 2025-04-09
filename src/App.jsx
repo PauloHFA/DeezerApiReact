@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Artist from './pages/Artist';
 import Search from './pages/Search';
+import Player from './components/Player';
 import { Container } from '@mui/material';
 
 const theme = createTheme({
@@ -105,6 +106,7 @@ function App() {
             <Route path="/search" element={<Search />} />
           </Routes>
         </Container>
+        <Player />
       </Router>
     </ThemeProvider>
   );

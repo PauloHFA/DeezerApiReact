@@ -12,12 +12,15 @@ import {
   Paper,
   InputAdornment,
   Container,
+  IconButton,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { searchArtists, searchTracks } from '../services/deezerApi';
 import SearchIcon from '@mui/icons-material/Search';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PersonIcon from '@mui/icons-material/Person';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import stateManager from '../services/StateManager';
 
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,9 +48,17 @@ const Search = () => {
     }
   };
 
+  const handlePlayTrack = (track) => {
+    stateManager.playTrack(track);
+  };
+
+  const handleAddToQueue = (track) => {
+    stateManager.addToQueue(track);
+  };
+
   return (
     <Container maxWidth="xl">
-      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
+      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, pb: 10 }}>
         <Paper
           elevation={0}
           sx={{
@@ -183,11 +194,22 @@ const Search = () => {
                           alt={track.title}
                           sx={{ objectFit: 'cover' }}
                         />
-                        <CardContent sx={{ flexGrow: 1 }}>
-                          <Typography gutterBottom variant="h6" component="div" align="center">
-                            {track.title}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" align="center">
+                        <CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography gutterBottom variant="h6" component="div" noWrap sx={{ flex: 1 }}>
+                              {track.title}
+                            </Typography>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePlayTrack(track);
+                              }}
+                            >
+                              <PlayArrowIcon />
+                            </IconButton>
+                          </Box>
+                          <Typography variant="body2" color="text.secondary" noWrap>
                             {track.artist.name}
                           </Typography>
                         </CardContent>

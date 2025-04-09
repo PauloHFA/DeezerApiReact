@@ -70,4 +70,14 @@ export const getTopPlaylists = async () => {
     console.error('Error getting top playlists:', error);
     throw error;
   }
+};
+
+export const getTrackPreview = async (id) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/track/${id}`);
+    return response.data.preview;
+  } catch (error) {
+    console.error('Error getting track preview:', error);
+    throw error;
+  }
 }; 
