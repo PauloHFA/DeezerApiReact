@@ -5,6 +5,8 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Artist from './pages/Artist';
 import Search from './pages/Search';
+import Album from './pages/Album';
+import Playlist from './pages/Playlist';
 import Player from './components/Player';
 import { Container } from '@mui/material';
 
@@ -103,6 +105,8 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/artist/:id" element={<Artist />} />
+            <Route path="/album/:id" element={<Album />} />
+            <Route path="/playlist/:id" element={<Playlist />} />
             <Route path="/search" element={<Search />} />
           </Routes>
         </Container>

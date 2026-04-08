@@ -42,6 +42,26 @@ export const getAlbumTracks = async (id) => {
   }
 };
 
+export const getAlbum = async (id) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/album/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting album:', error);
+    throw error;
+  }
+};
+
+export const getPlaylist = async (id) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/playlist/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting playlist:', error);
+    throw error;
+  }
+};
+
 export const searchTracks = async (query) => {
   try {
     const response = await axios.get(`${BASE_URL}/search/track?q=${query}`);
