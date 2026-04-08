@@ -1,123 +1,26 @@
-import axios from 'axios';
+import { apiClient } from './apiClient';
 
-const BASE_URL = '/api';
+// Search endpoints
+export const searchArtists = (query) => apiClient.get('/search/artist', { q: query });
+export const searchTracks = (query) => apiClient.get('/search/track', { q: query });
+export const searchAlbums = (query) => apiClient.get('/search/album', { q: query });
+export const searchPlaylists = (query) => apiClient.get('/search/playlist', { q: query });
 
-export const searchArtists = async (query) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/search/artist?q=${query}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error searching artists:', error);
-    throw error;
-  }
-};
+// Artist endpoints
+export const getArtist = (id) => apiClient.get(`/artist/${id}`);
+export const getArtistAlbums = (id) => apiClient.get(`/artist/${id}/albums`);
 
-export const getArtist = async (id) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/artist/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error getting artist:', error);
-    throw error;
-  }
-};
+// Album endpoints
+export const getAlbum = (id) => apiClient.get(`/album/${id}`);
+export const getAlbumTracks = (id) => apiClient.get(`/album/${id}/tracks`);
 
-export const getArtistAlbums = async (id) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/artist/${id}/albums`);
-    return response.data;
-  } catch (error) {
-    console.error('Error getting artist albums:', error);
-    throw error;
-  }
-};
+// Playlist endpoints
+export const getPlaylist = (id) => apiClient.get(`/playlist/${id}`);
 
-export const getAlbumTracks = async (id) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/album/${id}/tracks`);
-    return response.data;
-  } catch (error) {
-    console.error('Error getting album tracks:', error);
-    throw error;
-  }
-};
+// Chart/Top tracks endpoints
+export const getTopTracks = () => apiClient.get('/chart/0/tracks');
+export const getTopPlaylists = () => apiClient.get('/chart/0/playlists');
 
-export const getAlbum = async (id) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/album/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error getting album:', error);
-    throw error;
-  }
-};
-
-export const getPlaylist = async (id) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/playlist/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error getting playlist:', error);
-    throw error;
-  }
-};
-
-export const searchTracks = async (query) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/search/track?q=${query}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error searching tracks:', error);
-    throw error;
-  }
-};
-
-export const getTopTracks = async () => {
-  try {
-    const response = await axios.get(`${BASE_URL}/chart/0/tracks`);
-    return response.data;
-  } catch (error) {
-    console.error('Error getting top tracks:', error);
-    throw error;
-  }
-};
-
-export const getTopPlaylists = async () => {
-  try {
-    const response = await axios.get(`${BASE_URL}/chart/0/playlists`);
-    return response.data;
-  } catch (error) {
-    console.error('Error getting top playlists:', error);
-    throw error;
-  }
-};
-
-export const searchAlbums = async (query) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/search/album?q=${query}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error searching albums:', error);
-    throw error;
-  }
-};
-
-export const searchPlaylists = async (query) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/search/playlist?q=${query}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error searching playlists:', error);
-    throw error;
-  }
-};
-
-export const getTrackPreview = async (id) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/track/${id}`);
-    return response.data.preview;
-  } catch (error) {
-    console.error('Error getting track preview:', error);
-    throw error;
-  }
-}; 
+// Track endpoints
+export const getTrackPreview = (id) => 
+  apiClient.get(`/track/${id}`).then(data => data.preview); 

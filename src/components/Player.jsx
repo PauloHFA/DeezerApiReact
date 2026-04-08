@@ -31,37 +31,34 @@ const Player = () => {
 
   const audioRef = useRef(null);
 
-  // Handle previewUrl playback
+  // Consolidated audio management - handles src, playback state, and volume
   useEffect(() => {
-    if (audioRef.current) {
-      if (previewUrl) {
-        audioRef.current.src = previewUrl;
-        audioRef.current.play().catch((error) => {
-          console.error('Error playing preview:', error);
-        });
-      }
-    }
-  }, [previewUrl]);
+    const audio = audioRef.current;
+    if (!audio) return;
 
-  // Handle play/pause
-  useEffect(() => {
-    if (audioRef.current && previewUrl) {
-      if (isPlaying) {
-        audioRef.current.play().catch((error) => {
-          console.error('Error playing:', error);
-        });
-      } else {
-        audioRef.current.pause();
-      }
+    // Update source
+    if (previewUrl) {
+      audio.src = previewUrl;
     }
-  }, [isPlaying, previewUrl]);
 
-  // Handle volume
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
+    // Update play state
+    if (previewUrl && isPlaying) {
+      audio.play().catch((error) => {
+        console.error('Error playing preview:', error);
+      });
+    } else {
+      audio.pause();
     }
-  }, [volume]);
+
+    // Update volume
+    audio.volume = volume;
+
+    // Cleanup: pause and stop audio when component unmounts
+    return () => {
+      audio.pause();
+      audio.src = '';
+    };
+  }, [previewUrl, isPlaying, volume]);
 
   const handlePlayPause = () => {
     if (isPlaying) {

@@ -1,26 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Grid,
-  Card,
-  CardContent,
-  CardMedia,
-  Typography,
   Box,
   Paper,
   CircularProgress,
   Button,
   Chip,
-  IconButton,
-  Tooltip,
+  Typography,
 } from '@mui/material';
 import { searchArtists, getTopTracks, getTopPlaylists } from '../services/deezerApi';
 import { usePlayer } from '../hooks/usePlayer';
+import { ArtistCard, TrackCard, PlaylistCard } from '../components/CardComponents';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import AlbumIcon from '@mui/icons-material/Album';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
-import PreviewIcon from '@mui/icons-material/PlayCircleOutline';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -56,13 +51,16 @@ const Home = () => {
     fetchData();
   }, []);
 
-  const handlePreviewTrack = (track) => {
-    if (currentlyPlaying === track.id) {
-      stopPreview();
-      return;
-    }
-    playPreview(track);
-  };
+  const handlePreviewTrack = useCallback(
+    (track) => {
+      if (currentlyPlaying === track.id) {
+        stopPreview();
+        return;
+      }
+      playPreview(track);
+    },
+    [currentlyPlaying, playPreview, stopPreview]
+  );
 
   if (loading) {
     return (
@@ -179,42 +177,7 @@ const Home = () => {
         <Grid container spacing={3}>
           {featuredArtists.map((artist) => (
             <Grid item xs={12} sm={6} md={3} key={artist.id}>
-              <Card
-                onClick={() => navigate(`/artist/${artist.id}`)}
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  background: 'linear-gradient(to bottom, #1A1A1A, #000000)',
-                  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 8px 24px rgba(255,0,0,0.2)',
-                  },
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  height="250"
-                  image={artist.picture_medium}
-                  alt={artist.name}
-                  sx={{ objectFit: 'cover' }}
-                />
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography gutterBottom variant="h6" component="div" align="center">
-                    {artist.name}
-                  </Typography>
-                  <Chip
-                    label={`${artist.nb_fan.toLocaleString()} fans`}
-                    size="small"
-                    sx={{
-                      background: 'rgba(255,0,0,0.1)',
-                      color: 'primary.light',
-                    }}
-                  />
-                </CardContent>
-              </Card>
+              <ArtistCard artist={artist} onClick={() => navigate(`/artist/${artist.id}`)} />
             </Grid>
           ))}
         </Grid>
@@ -231,59 +194,12 @@ const Home = () => {
         <Grid container spacing={3}>
           {topTracks.map((track) => (
             <Grid item xs={12} sm={6} md={3} key={track.id}>
-              <Card
-                onClick={() => navigate(`/album/${track.album.id}`)}
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  background: 'linear-gradient(to bottom, #1A1A1A, #000000)',
-                  transition: 'transform 0.2s ease-in-out',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    transform: 'scale(1.02)',
-                  },
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  height="250"
-                  image={track.album.cover_medium}
-                  alt={track.title}
-                  sx={{ objectFit: 'cover' }}
-                />
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography gutterBottom variant="h6" component="div" noWrap sx={{ flex: 1 }}>
-                      {track.title}
-                    </Typography>
-                    <Tooltip title="Preview">
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handlePreviewTrack(track);
-                        }}
-                        sx={{
-                          color: currentlyPlaying === track.id ? 'primary.main' : 'inherit',
-                        }}
-                      >
-                        <PreviewIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" noWrap>
-                    {track.artist.name}
-                  </Typography>
-                  <Box sx={{ mt: 1 }}>
-                    <Chip
-                      size="small"
-                      label={`${Math.floor(track.duration / 60)}:${String(track.duration % 60).padStart(2, '0')}`}
-                      sx={{ background: 'rgba(255,255,255,0.1)' }}
-                    />
-                  </Box>
-                </CardContent>
-              </Card>
+              <TrackCard 
+                track={track}
+                isPlaying={currentlyPlaying === track.id}
+                onPlay={() => navigate(`/album/${track.album.id}`)}
+                onPreview={() => handlePreviewTrack(track)}
+              />
             </Grid>
           ))}
         </Grid>
@@ -300,36 +216,10 @@ const Home = () => {
         <Grid container spacing={3}>
           {topPlaylists.map((playlist) => (
             <Grid item xs={12} sm={6} md={3} key={playlist.id}>
-              <Card
+              <PlaylistCard 
+                playlist={playlist}
                 onClick={() => navigate(`/playlist/${playlist.id}`)}
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  background: 'linear-gradient(to bottom, #1A1A1A, #000000)',
-                  transition: 'transform 0.2s ease-in-out',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    transform: 'scale(1.02)',
-                  },
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  height="250"
-                  image={playlist.picture_medium}
-                  alt={playlist.title}
-                  sx={{ objectFit: 'cover' }}
-                />
-                <CardContent>
-                  <Typography gutterBottom variant="h6" component="div" noWrap>
-                    {playlist.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {playlist.nb_tracks} tracks
-                  </Typography>
-                </CardContent>
-              </Card>
+              />
             </Grid>
           ))}
         </Grid>
