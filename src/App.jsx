@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { PlayerProvider } from './contexts/PlayerContext';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Artist from './pages/Artist';
@@ -100,17 +101,19 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
-        <Navbar />
-        <Container maxWidth={false} disableGutters>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/artist/:id" element={<Artist />} />
-            <Route path="/album/:id" element={<Album />} />
-            <Route path="/playlist/:id" element={<Playlist />} />
-            <Route path="/search" element={<Search />} />
-          </Routes>
-        </Container>
-        <Player />
+        <PlayerProvider>
+          <Navbar />
+          <Container maxWidth={false} disableGutters>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/artist/:id" element={<Artist />} />
+              <Route path="/album/:id" element={<Album />} />
+              <Route path="/playlist/:id" element={<Playlist />} />
+              <Route path="/search" element={<Search />} />
+            </Routes>
+          </Container>
+          <Player />
+        </PlayerProvider>
       </Router>
     </ThemeProvider>
   );

@@ -17,23 +17,22 @@ import {
   Divider,
   Tooltip,
 } from '@mui/material';
-import { getArtist, getArtistAlbums, getAlbumTracks, getTrackPreview } from '../services/deezerApi';
+import { getArtist, getArtistAlbums, getAlbumTracks } from '../services/deezerApi';
+import { usePlayer } from '../hooks/usePlayer';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import AlbumIcon from '@mui/icons-material/Album';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PreviewIcon from '@mui/icons-material/PlayCircleOutline';
-import stateManager from '../services/StateManager';
 
 const Artist = () => {
   const { id } = useParams();
+  const { playPreview, stopPreview, currentlyPlaying } = usePlayer();
   const [artist, setArtist] = useState(null);
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedAlbum, setExpandedAlbum] = useState(null);
   const [albumTracks, setAlbumTracks] = useState({});
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
 
   useEffect(() => {
     const fetchArtistData = async () => {
@@ -75,24 +74,12 @@ const Artist = () => {
     }
   };
 
-  const handlePlayTrack = (track) => {
-    stateManager.playTrack(track);
-  };
-
-  const handlePreviewTrack = async (track) => {
-    try {
-      if (currentlyPlaying === track.id) {
-        setCurrentlyPlaying(null);
-        setPreviewUrl(null);
-        return;
-      }
-
-      const preview = await getTrackPreview(track.id);
-      setPreviewUrl(preview);
-      setCurrentlyPlaying(track.id);
-    } catch (error) {
-      console.error('Error playing preview:', error);
+  const handlePreviewTrack = (track) => {
+    if (currentlyPlaying === track.id) {
+      stopPreview();
+      return;
     }
+    playPreview(track);
   };
 
   const formatDuration = (duration) => {
@@ -224,18 +211,6 @@ const Artist = () => {
           </Grid>
         ))}
       </Grid>
-
-      {previewUrl && (
-        <audio
-          src={previewUrl}
-          autoPlay
-          onEnded={() => {
-            setCurrentlyPlaying(null);
-            setPreviewUrl(null);
-          }}
-          style={{ display: 'none' }}
-        />
-      )}
     </Box>
   );
 };

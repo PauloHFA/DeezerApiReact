@@ -14,23 +14,22 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import { searchArtists, getTopTracks, getTopPlaylists, getTrackPreview } from '../services/deezerApi';
+import { searchArtists, getTopTracks, getTopPlaylists } from '../services/deezerApi';
+import { usePlayer } from '../hooks/usePlayer';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import AlbumIcon from '@mui/icons-material/Album';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
 import PreviewIcon from '@mui/icons-material/PlayCircleOutline';
-import stateManager from '../services/StateManager';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { playTrack, playPreview, stopPreview, currentlyPlaying } = usePlayer();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [featuredArtists, setFeaturedArtists] = useState([]);
   const [topTracks, setTopTracks] = useState([]);
   const [topPlaylists, setTopPlaylists] = useState([]);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,24 +56,12 @@ const Home = () => {
     fetchData();
   }, []);
 
-  const handlePlayTrack = (track) => {
-    stateManager.playTrack(track);
-  };
-
-  const handlePreviewTrack = async (track) => {
-    try {
-      if (currentlyPlaying === track.id) {
-        setCurrentlyPlaying(null);
-        setPreviewUrl(null);
-        return;
-      }
-
-      const preview = await getTrackPreview(track.id);
-      setPreviewUrl(preview);
-      setCurrentlyPlaying(track.id);
-    } catch (error) {
-      console.error('Error playing preview:', error);
+  const handlePreviewTrack = (track) => {
+    if (currentlyPlaying === track.id) {
+      stopPreview();
+      return;
     }
+    playPreview(track);
   };
 
   if (loading) {

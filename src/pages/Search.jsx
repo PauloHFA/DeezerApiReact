@@ -16,13 +16,13 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { searchArtists, searchTracks, searchAlbums, searchPlaylists } from '../services/deezerApi';
+import { usePlayer } from '../hooks/usePlayer';
 import SearchIcon from '@mui/icons-material/Search';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PersonIcon from '@mui/icons-material/Person';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
 import AlbumIcon from '@mui/icons-material/Album';
-import stateManager from '../services/StateManager';
 
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,6 +32,7 @@ const Search = () => {
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { playTrack } = usePlayer();
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -54,14 +55,6 @@ const Search = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handlePlayTrack = (track) => {
-    stateManager.playTrack(track);
-  };
-
-  const handleAddToQueue = (track) => {
-    stateManager.addToQueue(track);
   };
 
   return (
@@ -299,7 +292,7 @@ const Search = () => {
                               size="small"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handlePlayTrack(track);
+                                playTrack(track);
                               }}
                             >
                               <PlayArrowIcon />

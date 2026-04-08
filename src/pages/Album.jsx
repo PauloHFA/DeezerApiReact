@@ -18,22 +18,21 @@ import {
   Chip,
   Paper,
 } from '@mui/material';
-import { getAlbum, getAlbumTracks, getTrackPreview } from '../services/deezerApi';
+import { getAlbum, getAlbumTracks } from '../services/deezerApi';
+import { usePlayer } from '../hooks/usePlayer';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PreviewIcon from '@mui/icons-material/PlayCircleOutline';
 import AlbumIcon from '@mui/icons-material/Album';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
-import stateManager from '../services/StateManager';
 
 const Album = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { playTrack, playPreview, stopPreview, currentlyPlaying } = usePlayer();
   const [album, setAlbum] = useState(null);
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -58,24 +57,12 @@ const Album = () => {
     fetchAlbumData();
   }, [id]);
 
-  const handlePlayTrack = (track) => {
-    stateManager.playTrack(track);
-  };
-
-  const handlePreviewTrack = async (track) => {
-    try {
-      if (currentlyPlaying === track.id) {
-        setCurrentlyPlaying(null);
-        setPreviewUrl(null);
-        return;
-      }
-
-      const preview = await getTrackPreview(track.id);
-      setPreviewUrl(preview);
-      setCurrentlyPlaying(track.id);
-    } catch (error) {
-      console.error('Error playing preview:', error);
+  const handlePreviewTrack = (track) => {
+    if (currentlyPlaying === track.id) {
+      stopPreview();
+      return;
     }
+    playPreview(track);
   };
 
   const formatDuration = (duration) => {
@@ -167,7 +154,7 @@ const Album = () => {
                     <Tooltip title="Tocar">
                       <IconButton
                         size="small"
-                        onClick={() => handlePlayTrack(track)}
+                        onClick={() => playTrack(track)}
                       >
                         <PlayArrowIcon />
                       </IconButton>
@@ -190,18 +177,6 @@ const Album = () => {
           ))}
         </List>
       </Paper>
-
-      {previewUrl && (
-        <audio
-          src={previewUrl}
-          autoPlay
-          onEnded={() => {
-            setCurrentlyPlaying(null);
-            setPreviewUrl(null);
-          }}
-          style={{ display: 'none' }}
-        />
-      )}
     </Box>
   );
 };

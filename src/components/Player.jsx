@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   Box,
   Slider,
@@ -14,48 +14,65 @@ import {
   SkipPrevious,
   VolumeUp,
 } from '@mui/icons-material';
-import stateManager from '../services/StateManager';
+import { usePlayer } from '../hooks/usePlayer';
 
 const Player = () => {
-  const [currentTrack, setCurrentTrack] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.5);
-  const [queue, setQueue] = useState([]);
+  const {
+    currentTrack,
+    isPlaying,
+    volume,
+    queue,
+    previewUrl,
+    pauseTrack,
+    resumeTrack,
+    setPlayerVolume,
+    playNext,
+  } = usePlayer();
 
+  const audioRef = useRef(null);
+
+  // Handle previewUrl playback
   useEffect(() => {
-    // Subscribe to state changes
-    const unsubscribeTrack = stateManager.subscribe('currentTrack', setCurrentTrack);
-    const unsubscribePlaying = stateManager.subscribe('isPlaying', setIsPlaying);
-    const unsubscribeVolume = stateManager.subscribe('volume', setVolume);
-    const unsubscribeQueue = stateManager.subscribe('queue', setQueue);
+    if (audioRef.current) {
+      if (previewUrl) {
+        audioRef.current.src = previewUrl;
+        audioRef.current.play().catch((error) => {
+          console.error('Error playing preview:', error);
+        });
+      }
+    }
+  }, [previewUrl]);
 
-    // Cleanup subscriptions
-    return () => {
-      unsubscribeTrack();
-      unsubscribePlaying();
-      unsubscribeVolume();
-      unsubscribeQueue();
-    };
-  }, []);
+  // Handle play/pause
+  useEffect(() => {
+    if (audioRef.current && previewUrl) {
+      if (isPlaying) {
+        audioRef.current.play().catch((error) => {
+          console.error('Error playing:', error);
+        });
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [isPlaying, previewUrl]);
+
+  // Handle volume
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
 
   const handlePlayPause = () => {
     if (isPlaying) {
-      stateManager.pauseTrack();
+      pauseTrack();
     } else {
-      stateManager.resumeTrack();
+      resumeTrack();
     }
   };
 
   const handleVolumeChange = (event, newValue) => {
-    stateManager.setVolume(newValue);
-  };
-
-  const handleNext = () => {
-    if (queue.length > 0) {
-      const nextTrack = queue[0];
-      stateManager.playTrack(nextTrack);
-      stateManager.setState('queue', queue.slice(1));
-    }
+    setPlayerVolume(newValue);
   };
 
   if (!currentTrack) {
@@ -73,12 +90,13 @@ const Player = () => {
         p: 2,
         background: 'linear-gradient(to right, #1A1A1A, #000000)',
         borderRadius: '16px 16px 0 0',
+        zIndex: 1000,
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
           <img
-            src={currentTrack.album.cover_small}
+            src={currentTrack.album?.cover_small || currentTrack.album?.cover_medium}
             alt={currentTrack.title}
             style={{ width: 50, height: 50, borderRadius: '8px' }}
           />
@@ -96,7 +114,7 @@ const Player = () => {
           <IconButton onClick={handlePlayPause} color="primary">
             {isPlaying ? <Pause /> : <PlayArrow />}
           </IconButton>
-          <IconButton onClick={handleNext} color="primary">
+          <IconButton onClick={playNext} color="primary" disabled={queue.length === 0}>
             <SkipNext />
           </IconButton>
           <Box sx={{ width: 100, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -112,6 +130,14 @@ const Player = () => {
           </Box>
         </Stack>
       </Box>
+
+      <audio
+        ref={audioRef}
+        onEnded={() => {
+          pauseTrack();
+        }}
+        style={{ display: 'none' }}
+      />
     </Paper>
   );
 };
