@@ -92,6 +92,26 @@ export const getTopPlaylists = async () => {
   }
 };
 
+export const searchAlbums = async (query) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/search/album?q=${query}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error searching albums:', error);
+    throw error;
+  }
+};
+
+export const searchPlaylists = async (query) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/search/playlist?q=${query}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error searching playlists:', error);
+    throw error;
+  }
+};
+
 export const getTrackPreview = async (id) => {
   try {
     const response = await axios.get(`${BASE_URL}/track/${id}`);

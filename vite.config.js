@@ -12,6 +12,17 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
         secure: false,
       }
+    },
+    host: true,
+    cors: true,
+    allowedHosts: [
+      'localhost',
+      '.serveo.net'  
+    ],
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Authorization'
     }
   }
 })

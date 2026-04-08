@@ -245,12 +245,14 @@ const Home = () => {
           {topTracks.map((track) => (
             <Grid item xs={12} sm={6} md={3} key={track.id}>
               <Card
+                onClick={() => navigate(`/album/${track.album.id}`)}
                 sx={{
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
                   background: 'linear-gradient(to bottom, #1A1A1A, #000000)',
                   transition: 'transform 0.2s ease-in-out',
+                  cursor: 'pointer',
                   '&:hover': {
                     transform: 'scale(1.02)',
                   },

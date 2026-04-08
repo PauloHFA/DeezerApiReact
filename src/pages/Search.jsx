@@ -15,17 +15,21 @@ import {
   IconButton,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { searchArtists, searchTracks } from '../services/deezerApi';
+import { searchArtists, searchTracks, searchAlbums, searchPlaylists } from '../services/deezerApi';
 import SearchIcon from '@mui/icons-material/Search';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PersonIcon from '@mui/icons-material/Person';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import QueueMusicIcon from '@mui/icons-material/QueueMusic';
+import AlbumIcon from '@mui/icons-material/Album';
 import stateManager from '../services/StateManager';
 
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [artists, setArtists] = useState([]);
   const [tracks, setTracks] = useState([]);
+  const [albums, setAlbums] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -34,13 +38,17 @@ const Search = () => {
     
     setLoading(true);
     try {
-      const [artistsResponse, tracksResponse] = await Promise.all([
+      const [artistsResponse, tracksResponse, albumsResponse, playlistsResponse] = await Promise.all([
         searchArtists(searchQuery),
         searchTracks(searchQuery),
+        searchAlbums(searchQuery),
+        searchPlaylists(searchQuery),
       ]);
       
       setArtists(artistsResponse.data);
       setTracks(tracksResponse.data);
+      setAlbums(albumsResponse.data);
+      setPlaylists(playlistsResponse.data);
     } catch (error) {
       console.error('Error searching:', error);
     } finally {
@@ -168,6 +176,92 @@ const Search = () => {
               </Box>
             )}
 
+            {albums.length > 0 && (
+              <Box sx={{ mb: 6 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
+                  <AlbumIcon sx={{ color: 'primary.main' }} />
+                  <Typography variant="h4" component="h2">
+                    Albums
+                  </Typography>
+                </Box>
+                <Grid container spacing={3} justifyContent="center">
+                  {albums.map((album) => (
+                    <Grid item xs={12} sm={6} md={4} lg={3} key={album.id}>
+                      <Card
+                        sx={{
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          background: 'linear-gradient(to bottom, #1A1A1A, #000000)',
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => navigate(`/album/${album.id}`)}
+                      >
+                        <CardMedia
+                          component="img"
+                          height="200"
+                          image={album.cover_medium}
+                          alt={album.title}
+                          sx={{ objectFit: 'cover' }}
+                        />
+                        <CardContent sx={{ flexGrow: 1 }}>
+                          <Typography gutterBottom variant="h6" component="div" noWrap>
+                            {album.title}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" noWrap>
+                            {album.artist.name}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            )}
+
+            {playlists.length > 0 && (
+              <Box sx={{ mb: 6 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
+                  <QueueMusicIcon sx={{ color: 'primary.main' }} />
+                  <Typography variant="h4" component="h2">
+                    Playlists
+                  </Typography>
+                </Box>
+                <Grid container spacing={3} justifyContent="center">
+                  {playlists.map((playlist) => (
+                    <Grid item xs={12} sm={6} md={4} lg={3} key={playlist.id}>
+                      <Card
+                        sx={{
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          background: 'linear-gradient(to bottom, #1A1A1A, #000000)',
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => navigate(`/playlist/${playlist.id}`)}
+                      >
+                        <CardMedia
+                          component="img"
+                          height="200"
+                          image={playlist.picture_medium}
+                          alt={playlist.title}
+                          sx={{ objectFit: 'cover' }}
+                        />
+                        <CardContent sx={{ flexGrow: 1 }}>
+                          <Typography gutterBottom variant="h6" component="div" noWrap>
+                            {playlist.title}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" noWrap>
+                            {playlist.nb_tracks} tracks
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            )}
+
             {tracks.length > 0 && (
               <Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
@@ -185,7 +279,9 @@ const Search = () => {
                           display: 'flex',
                           flexDirection: 'column',
                           background: 'linear-gradient(to bottom, #1A1A1A, #000000)',
+                          cursor: 'pointer',
                         }}
+                        onClick={() => navigate(`/album/${track.album.id}`)}
                       >
                         <CardMedia
                           component="img"
@@ -212,6 +308,12 @@ const Search = () => {
                           <Typography variant="body2" color="text.secondary" noWrap>
                             {track.artist.name}
                           </Typography>
+                          <Box sx={{ mt: 1, display: 'flex', gap: 1, alignItems: 'center' }}>
+                            <AlbumIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                            <Typography variant="caption" color="text.secondary" noWrap>
+                              Clique no card para ver o álbum
+                            </Typography>
+                          </Box>
                         </CardContent>
                       </Card>
                     </Grid>
