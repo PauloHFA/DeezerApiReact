@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   TextField,
@@ -17,6 +17,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { searchArtists, searchTracks, searchAlbums, searchPlaylists } from '../services/deezerApi';
 import { usePlayer } from '../hooks/usePlayer';
+import { useDebounce } from '../hooks/useDebounce';
+import { useNotification } from '../hooks/useNotification';
+import { SkeletonGrid, SkeletonTrackList } from '../components/SkeletonLoader';
 import SearchIcon from '@mui/icons-material/Search';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PersonIcon from '@mui/icons-material/Person';
@@ -33,25 +36,55 @@ const Search = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { playTrack } = usePlayer();
+  const { info, error, success } = useNotification();
+  const debouncedQuery = useDebounce(searchQuery, 500);
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+  // Efeito para buscar quando query é debounceada
+  useEffect(() => {
+    if (debouncedQuery.trim()) {
+      handleSearch(debouncedQuery);
+    } else {
+      // Limpar resultados se query vazia
+      setArtists([]);
+      setTracks([]);
+      setAlbums([]);
+      setPlaylists([]);
+    }
+  }, [debouncedQuery]);
+
+  const handleSearch = async (query) => {
+    if (!query.trim()) return;
     
     setLoading(true);
     try {
       const [artistsResponse, tracksResponse, albumsResponse, playlistsResponse] = await Promise.all([
-        searchArtists(searchQuery),
-        searchTracks(searchQuery),
-        searchAlbums(searchQuery),
-        searchPlaylists(searchQuery),
+        searchArtists(query),
+        searchTracks(query),
+        searchAlbums(query),
+        searchPlaylists(query),
       ]);
       
       setArtists(artistsResponse.data);
       setTracks(tracksResponse.data);
       setAlbums(albumsResponse.data);
       setPlaylists(playlistsResponse.data);
-    } catch (error) {
-      console.error('Error searching:', error);
+      
+      const totalResults = 
+        artistsResponse.data.length +
+        tracksResponse.data.length +
+        albumsResponse.data.length +
+        playlistsResponse.data.length;
+      
+      if (totalResults === 0) {
+        info('Nenhum resultado encontrado');
+      }
+    } catch (err) {
+      console.error('Error searching:', err);
+      error('Erro ao buscar. Tente novamente!');
+      setArtists([]);
+      setTracks([]);
+      setAlbums([]);
+      setPlaylists([]);
     } finally {
       setLoading(false);
     }
@@ -78,11 +111,11 @@ const Search = () => {
             <Box sx={{ width: '100%', display: 'flex', gap: 2, alignItems: 'center' }}>
               <TextField
                 fullWidth
-                label="Search for artists or tracks"
+                label="Busque artistas, músicas, álbuns e playlists..."
                 variant="outlined"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                disabled={loading}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -101,30 +134,42 @@ const Search = () => {
                   },
                 }}
               />
-              <Button
-                variant="contained"
-                onClick={handleSearch}
-                disabled={loading}
-                sx={{
-                  height: '56px',
-                  px: 4,
-                  background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
-                  '&:hover': {
-                    background: 'linear-gradient(45deg, #CC0000 30%, #FF0000 90%)',
-                  },
-                }}
-              >
-                Search
-              </Button>
+              {loading && (
+                <CircularProgress
+                  size={40}
+                  sx={{
+                    color: 'primary.main',
+                  }}
+                />
+              )}
             </Box>
           </Box>
         </Paper>
 
-        {loading ? (
-          <Box display="flex" justifyContent="center" my={4}>
-            <CircularProgress sx={{ color: 'primary.main' }} />
+        {loading && searchQuery.trim() ? (
+          <Box sx={{ width: '100%', maxWidth: '1200px' }}>
+            <Box sx={{ mb: 6 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
+                <PersonIcon sx={{ color: 'primary.main' }} />
+                <Typography variant="h4" component="h2">
+                  Artistas
+                </Typography>
+              </Box>
+              <Grid container spacing={3} justifyContent="center">
+                <SkeletonGrid count={4} xs={12} sm={6} md={4} lg={3} />
+              </Grid>
+            </Box>
+            <Box sx={{ mb: 6 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
+                <MusicNoteIcon sx={{ color: 'primary.main' }} />
+                <Typography variant="h4" component="h2">
+                  Tracks
+                </Typography>
+              </Box>
+              <SkeletonTrackList count={5} />
+            </Box>
           </Box>
-        ) : (
+        ) : searchQuery.trim() ? (
           <Box sx={{ width: '100%', maxWidth: '1200px' }}>
             {artists.length > 0 && (
               <Box sx={{ mb: 6 }}>
@@ -314,6 +359,26 @@ const Search = () => {
                 </Grid>
               </Box>
             )}
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '400px',
+              gap: 2,
+            }}
+          >
+            <MusicNoteIcon sx={{ fontSize: 80, color: 'primary.main', opacity: 0.5 }} />
+            <Typography variant="h5" color="text.secondary">
+              Comece a buscar suas músicas favoritas
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Digite um artista, música, álbum ou playlist
+            </Typography>
           </Box>
         )}
       </Box>
