@@ -6,6 +6,8 @@ import {
   Typography,
   Paper,
   Stack,
+  Button,
+  Chip,
 } from '@mui/material';
 import {
   PlayArrow,
@@ -13,6 +15,7 @@ import {
   SkipNext,
   SkipPrevious,
   VolumeUp,
+  OpenInNew,
 } from '@mui/icons-material';
 import { usePlayer } from '../hooks/usePlayer';
 
@@ -90,7 +93,7 @@ const Player = () => {
         zIndex: 1000,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'space-between' }}>
         <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
           <img
             src={currentTrack.album?.cover_small || currentTrack.album?.cover_medium}
@@ -104,6 +107,25 @@ const Player = () => {
             <Typography variant="body2" color="text.secondary" noWrap>
               {currentTrack.artist.name}
             </Typography>
+            <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+              <Chip label="Preview (30s)" size="small" variant="outlined" />
+              {currentTrack.link && (
+                <Button
+                  size="small"
+                  endIcon={<OpenInNew />}
+                  onClick={() => window.open(currentTrack.link, '_blank')}
+                  sx={{
+                    textTransform: 'none',
+                    color: 'primary.main',
+                    '&:hover': {
+                      backgroundColor: 'rgba(29, 185, 84, 0.1)',
+                    },
+                  }}
+                >
+                  Ouça Completo
+                </Button>
+              )}
+            </Box>
           </Box>
         </Box>
 

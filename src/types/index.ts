@@ -56,6 +56,7 @@ export interface Track {
   rank?: number;
   explicit_lyrics: boolean;
   preview?: string;
+  link?: string;
   position?: number;
   artist: Artist;
   album: Album;
