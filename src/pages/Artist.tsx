@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -16,20 +16,24 @@ import {
   ListItemIcon,
   Divider,
   Tooltip,
+  Button,
 } from '@mui/material';
-import { getArtist, getArtistAlbums, getAlbumTracks } from '../services/deezerApi';
+import { getArtist, getArtistAlbums, getArtistTopTracks, getAlbumTracks } from '../services/deezerApi';
 import { usePlayer } from '../hooks/usePlayer';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import AlbumIcon from '@mui/icons-material/Album';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PreviewIcon from '@mui/icons-material/PlayCircleOutline';
 
 const Artist = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { playPreview, stopPreview, currentlyPlaying } = usePlayer();
   const [artist, setArtist] = useState(null);
   const [albums, setAlbums] = useState([]);
+  const [topTracks, setTopTracks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedAlbum, setExpandedAlbum] = useState(null);
   const [albumTracks, setAlbumTracks] = useState({});
@@ -37,12 +41,14 @@ const Artist = () => {
   useEffect(() => {
     const fetchArtistData = async () => {
       try {
-        const [artistData, albumsData] = await Promise.all([
+        const [artistData, albumsData, topTracksData] = await Promise.all([
           getArtist(id),
           getArtistAlbums(id),
+          getArtistTopTracks(id),
         ]);
         setArtist(artistData);
         setAlbums(albumsData.data);
+        setTopTracks(topTracksData.data);
       } catch (error) {
         console.error('Error fetching artist data:', error);
       } finally {
@@ -106,29 +112,101 @@ const Artist = () => {
 
   return (
     <Box sx={{ py: 4 }}>
-      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+      <Button
+        startIcon={<ArrowBackIosNewIcon />}
+        onClick={() => navigate(-1)}
+        sx={{ mb: 3, color: 'primary.main' }}
+      >
+        Voltar
+      </Button>
+
+      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
         <CardMedia
           component="img"
           sx={{ width: 200, height: 200, borderRadius: '50%' }}
           image={artist.picture_xl}
           alt={artist.name}
         />
-        <Box>
+        <Box sx={{ flex: 1, minWidth: 280 }}>
           <Typography variant="h3" component="h1" gutterBottom>
             {artist.name}
           </Typography>
           <Typography variant="h6" color="text.secondary">
             {artist.nb_fan.toLocaleString()} fans
           </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Álbuns: {artist.nb_album ?? albums.length}
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Rádio: {artist.radio ? 'Disponível' : 'Indisponível'}
+          </Typography>
+          {artist.genres?.length ? (
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+              Gênero{artist.genres.length > 1 ? 's' : ''}: {artist.genres.map((genre) => genre.name).join(', ')}
+            </Typography>
+          ) : artist.genre_id ? (
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+              Gênero ID: {artist.genre_id}
+            </Typography>
+          ) : null}
+          {(artist.description || artist.biography) && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2, maxWidth: '720px', whiteSpace: 'pre-line' }}>
+              {artist.description ?? artist.biography}
+            </Typography>
+          )}
         </Box>
       </Box>
+
+      {topTracks.length > 0 && (
+        <Box sx={{ mb: 6 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+            <MusicNoteIcon sx={{ color: 'primary.main' }} />
+            <Typography variant="h4" component="h2">
+              Top Tracks
+            </Typography>
+          </Box>
+          <List>
+            {topTracks.map((track, index) => (
+              <ListItem
+                key={track.id}
+                sx={{
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                  },
+                }}
+              >
+                <ListItemIcon>
+                  <Typography variant="body2" color="text.secondary">
+                    {index + 1}
+                  </Typography>
+                </ListItemIcon>
+                <ListItemText
+                  primary={track.title}
+                  secondary={formatDuration(track.duration)}
+                />
+                <Tooltip title="Preview">
+                  <IconButton
+                    size="small"
+                    onClick={() => handlePreviewTrack(track)}
+                    sx={{
+                      color: currentlyPlaying === track.id ? 'primary.main' : 'inherit',
+                    }}
+                  >
+                    <PreviewIcon />
+                  </IconButton>
+                </Tooltip>
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      )}
 
       <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
         Albums
       </Typography>
       <Grid container spacing={3}>
         {albums.map((album) => (
-          <Grid item xs={12} key={album.id}>
+          <Grid size={{ xs: 12 }} key={album.id}>
             <Card
               sx={{
                 background: 'linear-gradient(to right, #1A1A1A, #000000)',

@@ -46,11 +46,11 @@ export const SkeletonCard = ({ variant = 'default' }) => {
 /**
  * SkeletonGrid - Grid de cards de carregamento
  */
-export const SkeletonGrid = ({ count = 8, xs = 12, sm = 6, md = 3 }) => {
+export const SkeletonGrid = ({ count = 8, xs = 12, sm = 6, md = 3, lg = 3 }) => {
   return (
     <>
       {Array.from({ length: count }).map((_, idx) => (
-        <Grid item xs={xs} sm={sm} md={md} key={idx}>
+        <Grid size={{ xs, sm, md, lg }} key={idx}>
           <SkeletonCard />
         </Grid>
       ))}

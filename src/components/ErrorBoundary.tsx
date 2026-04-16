@@ -64,7 +64,7 @@ class ErrorBoundary extends React.Component {
               Desculpe, um erro inesperado ocorreu. Nossa equipe foi notificada.
             </Typography>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <Box
                 sx={{
                   p: 2,

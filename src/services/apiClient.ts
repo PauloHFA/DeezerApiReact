@@ -1,10 +1,22 @@
-import axios from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+
+interface ApiClientOptions {
+  timeout?: number;
+  maxRetries?: number;
+  retryDelay?: number;
+}
 
 /**
  * API Client com retry automático, timeout e centralized error handling
  */
 class ApiClient {
-  constructor(baseURL = '/api', options = {}) {
+  private baseURL: string;
+  private timeout: number;
+  private maxRetries: number;
+  private retryDelay: number;
+  private client: AxiosInstance;
+
+  constructor(baseURL: string = '/api', options: ApiClientOptions = {}) {
     this.baseURL = baseURL;
     this.timeout = options.timeout || 10000;
     this.maxRetries = options.maxRetries || 3;
@@ -19,12 +31,20 @@ class ApiClient {
   /**
    * Retry com backoff exponencial
    */
-  async retryWithBackoff(requestFn, retries = this.maxRetries) {
+  async retryWithBackoff<T>(
+    requestFn: () => Promise<T>,
+    retries: number = this.maxRetries
+  ): Promise<T> {
     try {
       return await requestFn();
     } catch (error) {
+      const axiosError = error as any;
+      
       // Não retry se for erro do cliente (4xx)
-      if (error.response?.status >= 400 && error.response?.status < 500) {
+      if (
+        axiosError.response?.status >= 400 &&
+        axiosError.response?.status < 500
+      ) {
         throw error;
       }
 
@@ -41,40 +61,42 @@ class ApiClient {
   /**
    * GET request com retry automático
    */
-  async get(endpoint, params = {}) {
+  async get<T>(endpoint: string, params: Record<string, any> = {}): Promise<T> {
     try {
       const response = await this.retryWithBackoff(() =>
-        this.client.get(endpoint, {
+        this.client.get<T>(endpoint, {
           params: this._encodeParams(params),
         })
       );
       return response.data;
     } catch (error) {
       this._handleError(error, 'GET', endpoint);
+      throw error;
     }
   }
 
   /**
    * POST request
    */
-  async post(endpoint, data = {}) {
+  async post<T>(endpoint: string, data: any = {}): Promise<T> {
     try {
       const response = await this.retryWithBackoff(() =>
-        this.client.post(endpoint, data)
+        this.client.post<T>(endpoint, data)
       );
       return response.data;
     } catch (error) {
       this._handleError(error, 'POST', endpoint);
+      throw error;
     }
   }
 
   /**
    * Encode params com URI encoding adequado
    */
-  _encodeParams(params) {
-    const encoded = {};
+  private _encodeParams(params: Record<string, any>): Record<string, any> {
+    const encoded: Record<string, any> = {};
     for (const key in params) {
-      encoded[key] = encodeURIComponent(params[key]);
+      encoded[key] = encodeURIComponent(String(params[key]));
     }
     return encoded;
   }
@@ -82,7 +104,7 @@ class ApiClient {
   /**
    * Centralized error handling
    */
-  _handleError(error, method = '', endpoint = '') {
+  private _handleError(error: any, method: string = '', endpoint: string = ''): void {
     const errorInfo = {
       method,
       endpoint,
@@ -92,30 +114,32 @@ class ApiClient {
 
     if (error.response) {
       // Erro do servidor (status !== 2xx)
-      errorInfo.status = error.response.status;
-      errorInfo.data = error.response.data;
+      const status = error.response.status;
+      const data = error.response.data;
       console.error(
-        `[API Error] ${method} ${endpoint} - Status: ${error.response.status}`,
-        errorInfo
+        `[API Error] ${method} ${endpoint} - Status: ${status}`,
+        { ...errorInfo, status, data }
       );
     } else if (error.request) {
       // Request foi feito mas sem resposta
-      errorInfo.type = 'NO_RESPONSE';
-      console.error(`[API Error] ${method} ${endpoint} - No response from server`, errorInfo);
+      console.error(
+        `[API Error] ${method} ${endpoint} - No response from server`,
+        { ...errorInfo, type: 'NO_RESPONSE' }
+      );
     } else {
       // Erro ao preparar request
-      errorInfo.type = 'REQUEST_ERROR';
-      console.error(`[API Error] ${method} ${endpoint} - Request error`, errorInfo);
+      console.error(
+        `[API Error] ${method} ${endpoint} - Request error`,
+        { ...errorInfo, type: 'REQUEST_ERROR' }
+      );
     }
-
-    throw error;
   }
 }
 
 // Singleton instance
-export const apiClient = new ApiClient(process.env.VITE_API_BASE_URL || '/api', {
-  timeout: parseInt(process.env.VITE_API_TIMEOUT || '10000'),
-  maxRetries: parseInt(process.env.VITE_API_RETRIES || '3'),
+export const apiClient = new ApiClient(import.meta.env.VITE_API_BASE_URL || '/api', {
+  timeout: parseInt(import.meta.env.VITE_API_TIMEOUT || '10000'),
+  maxRetries: parseInt(import.meta.env.VITE_API_RETRIES || '3'),
 });
 
 export default apiClient;

@@ -1,18 +1,21 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { Suspense, lazy } from 'react';
 import { PlayerProvider } from './contexts/PlayerContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import NotificationContainer from './components/NotificationContainer';
 import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import Artist from './pages/Artist';
-import Search from './pages/Search';
-import Album from './pages/Album';
-import Playlist from './pages/Playlist';
 import Player from './components/Player';
-import { Container } from '@mui/material';
+import { Container, CircularProgress, Box } from '@mui/material';
+
+// Lazy load pages
+const Home = lazy(() => import('./pages/Home'));
+const Artist = lazy(() => import('./pages/Artist'));
+const Search = lazy(() => import('./pages/Search'));
+const Album = lazy(() => import('./pages/Album'));
+const Playlist = lazy(() => import('./pages/Playlist'));
 
 const theme = createTheme({
   palette: {
@@ -110,13 +113,19 @@ function App() {
             <PlayerProvider>
               <Navbar />
               <Container maxWidth={false} disableGutters>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/artist/:id" element={<Artist />} />
-                  <Route path="/album/:id" element={<Album />} />
-                  <Route path="/playlist/:id" element={<Playlist />} />
-                  <Route path="/search" element={<Search />} />
-                </Routes>
+                <Suspense fallback={
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                    <CircularProgress size={60} sx={{ color: 'primary.main' }} />
+                  </Box>
+                }>
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/artist/:id" element={<Artist />} />
+                    <Route path="/album/:id" element={<Album />} />
+                    <Route path="/playlist/:id" element={<Playlist />} />
+                    <Route path="/search" element={<Search />} />
+                  </Routes>
+                </Suspense>
               </Container>
               <Player />
             </PlayerProvider>

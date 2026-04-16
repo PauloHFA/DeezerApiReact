@@ -52,13 +52,28 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [queue, playTrack]);
 
-  const playPreview = useCallback((previewUrlData) => {
-    setPreviewUrl(previewUrlData);
+  const playPreview = useCallback((trackOrUrl) => {
+    if (typeof trackOrUrl === 'string') {
+      setPreviewUrl(trackOrUrl);
+      setIsPlaying(true);
+      return;
+    }
+
+    if (trackOrUrl?.preview) {
+      setCurrentTrack(trackOrUrl);
+      setPreviewUrl(trackOrUrl.preview);
+      setCurrentlyPlaying(trackOrUrl.id);
+      setIsPlaying(true);
+      return;
+    }
+
+    console.warn('playPreview expects a track object with a preview URL or a preview URL string.');
   }, []);
 
   const stopPreview = useCallback(() => {
     setPreviewUrl(null);
     setCurrentlyPlaying(null);
+    setIsPlaying(false);
   }, []);
 
   const setCurrentlyPlayingTrack = useCallback((trackId) => {

@@ -176,7 +176,7 @@ const Home = () => {
         </Box>
         <Grid container spacing={3}>
           {featuredArtists.map((artist) => (
-            <Grid item xs={12} sm={6} md={3} key={artist.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={artist.id}>
               <ArtistCard artist={artist} onClick={() => navigate(`/artist/${artist.id}`)} />
             </Grid>
           ))}
@@ -193,7 +193,7 @@ const Home = () => {
         </Box>
         <Grid container spacing={3}>
           {topTracks.map((track) => (
-            <Grid item xs={12} sm={6} md={3} key={track.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={track.id}>
               <TrackCard 
                 track={track}
                 isPlaying={currentlyPlaying === track.id}
@@ -215,7 +215,7 @@ const Home = () => {
         </Box>
         <Grid container spacing={3}>
           {topPlaylists.map((playlist) => (
-            <Grid item xs={12} sm={6} md={3} key={playlist.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={playlist.id}>
               <PlaylistCard 
                 playlist={playlist}
                 onClick={() => navigate(`/playlist/${playlist.id}`)}
@@ -239,17 +239,6 @@ const Home = () => {
         </Typography>
       </Box>
 
-      {previewUrl && (
-        <audio
-          src={previewUrl}
-          autoPlay
-          onEnded={() => {
-            setCurrentlyPlaying(null);
-            setPreviewUrl(null);
-          }}
-          style={{ display: 'none' }}
-        />
-      )}
     </Box>
   );
 };
