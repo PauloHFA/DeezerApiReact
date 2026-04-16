@@ -19,6 +19,8 @@ export interface Artist {
   genres?: Genre[];
   description?: string;
   biography?: string;
+  radio_url?: string;
+  link?: string;
   type: string;
 }
 
@@ -40,6 +42,7 @@ export interface Album {
   release_date: string;
   record_type?: string;
   explicit_lyrics?: boolean;
+  description?: string;
   artist?: Artist;
   tracks?: Track[];
   type: string;

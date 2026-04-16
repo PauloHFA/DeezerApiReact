@@ -24,6 +24,8 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PreviewIcon from '@mui/icons-material/PlayCircleOutline';
 import AlbumIcon from '@mui/icons-material/Album';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import { Button } from '@mui/material';
 
 const Album = () => {
   const { id } = useParams();
@@ -91,6 +93,14 @@ const Album = () => {
 
   return (
     <Box sx={{ py: 4, width: '100%', maxWidth: '1200px', mx: 'auto' }}>
+      <Button
+        startIcon={<ArrowBackIosNewIcon />}
+        onClick={() => navigate(-1)}
+        sx={{ mb: 3, color: 'primary.main' }}
+      >
+        Voltar
+      </Button>
+
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 4, flexWrap: 'wrap' }}>
         <CardMedia
           component="img"
@@ -111,7 +121,15 @@ const Album = () => {
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 2 }}>
             <Chip label={`Duração: ${formatDuration(album.duration)}`} />
             <Chip label={`Gênero: ${album.genres?.data?.[0]?.name || 'Desconhecido'}`} />
+            {album.rating && <Chip label={`Rating: ${album.rating}%`} />}
           </Box>
+          {album.description && (
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-line' }}>
+                {album.description}
+              </Typography>
+            </Box>
+          )}
           <Box sx={{ mt: 3 }}>
             <Typography variant="body2" color="text.secondary">
               Clique no artista para ver mais detalhes.

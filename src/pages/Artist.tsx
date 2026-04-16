@@ -137,9 +137,23 @@ const Artist = () => {
           <Typography variant="body1" color="text.secondary">
             Álbuns: {artist.nb_album ?? albums.length}
           </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Rádio: {artist.radio ? 'Disponível' : 'Indisponível'}
-          </Typography>
+          {artist.radio ? (
+            <Box sx={{ mt: 1 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                color="primary"
+                onClick={() => window.open(`https://www.deezer.com/artist/${artist.id}/radio`, '_blank')}
+                sx={{ mt: 1 }}
+              >
+                🎙️ Ouvir Rádio
+              </Button>
+            </Box>
+          ) : (
+            <Typography variant="body1" color="text.secondary">
+              Rádio: Indisponível
+            </Typography>
+          )}
           {artist.genres?.length ? (
             <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
               Gênero{artist.genres.length > 1 ? 's' : ''}: {artist.genres.map((genre) => genre.name).join(', ')}
