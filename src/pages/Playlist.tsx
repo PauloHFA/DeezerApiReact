@@ -23,6 +23,8 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PreviewIcon from '@mui/icons-material/PlayCircleOutline';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import { Button } from '@mui/material';
 
 const Playlist = () => {
   const { id } = useParams();
@@ -84,6 +86,14 @@ const Playlist = () => {
 
   return (
     <Box sx={{ py: 4, width: '100%', maxWidth: '1200px', mx: 'auto' }}>
+      <Button
+        startIcon={<ArrowBackIosNewIcon />}
+        onClick={() => navigate(-1)}
+        sx={{ mb: 3, color: 'primary.main' }}
+      >
+        Voltar
+      </Button>
+
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 4, flexWrap: 'wrap' }}>
         <CardMedia
           component="img"
