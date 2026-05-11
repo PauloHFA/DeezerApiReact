@@ -19,9 +19,12 @@ import {
   Paper,
 } from '@mui/material';
 import { getAlbum, getAlbumTracks } from '../services/deezerApi';
+import { fetchYoutubeVideoData } from '../services/youtubeApi';
 import { usePlayer } from '../hooks/usePlayer';
+import { useNotification } from '../hooks/useNotification';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PreviewIcon from '@mui/icons-material/PlayCircleOutline';
+import YouTubeIcon from '@mui/icons-material/YouTube';
 import AlbumIcon from '@mui/icons-material/Album';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -30,11 +33,12 @@ import { Button } from '@mui/material';
 const Album = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { playTrack, playPreview, stopPreview, currentlyPlaying } = usePlayer();
+  const { playTrack, playPreview, stopPreview, playYoutube, currentlyPlaying } = usePlayer();
+  const { info, error: notifyError, success } = useNotification();
   const [album, setAlbum] = useState(null);
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [pageError, setPageError] = useState(null);
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -47,10 +51,10 @@ const Album = () => {
 
         setAlbum(albumData);
         setTracks(trackData.data);
-        setError(null);
+        setPageError(null);
       } catch (error) {
         console.error('Error fetching album:', error);
-        setError('Falha ao carregar o álbum. Tente novamente mais tarde.');
+        setPageError('Falha ao carregar o álbum. Tente novamente mais tarde.');
       } finally {
         setLoading(false);
       }
@@ -67,6 +71,18 @@ const Album = () => {
     playPreview(track);
   };
 
+  const handleOpenYoutube = async (track) => {
+    const query = `${track.title} ${track.artist.name}`;
+    info('Buscando vídeo no YouTube...');
+    const videoData = await fetchYoutubeVideoData(query);
+    if (!videoData?.videoId) {
+      notifyError('Não foi possível encontrar o vídeo no YouTube.');
+      return;
+    }
+    playYoutube(track, videoData.videoId);
+    success('Reproduzindo no player do app.');
+  };
+
   const formatDuration = (duration) => {
     const minutes = Math.floor(duration / 60);
     const seconds = String(duration % 60).padStart(2, '0');
@@ -81,11 +97,11 @@ const Album = () => {
     );
   }
 
-  if (error || !album) {
+  if (pageError || !album) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="70vh">
         <Typography variant="h5" color="error">
-          {error || 'Álbum não encontrado'}
+          {pageError || 'Álbum não encontrado'}
         </Typography>
       </Box>
     );
@@ -167,6 +183,15 @@ const Album = () => {
                         sx={{ color: currentlyPlaying === track.id ? 'primary.main' : 'inherit' }}
                       >
                         <PreviewIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="YouTube">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenYoutube(track)}
+                        color="error"
+                      >
+                        <YouTubeIcon />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Tocar">

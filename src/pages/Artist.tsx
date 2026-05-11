@@ -19,18 +19,22 @@ import {
   Button,
 } from '@mui/material';
 import { getArtist, getArtistAlbums, getArtistTopTracks, getAlbumTracks } from '../services/deezerApi';
+import { fetchYoutubeVideoData } from '../services/youtubeApi';
 import { usePlayer } from '../hooks/usePlayer';
+import { useNotification } from '../hooks/useNotification';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import AlbumIcon from '@mui/icons-material/Album';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PreviewIcon from '@mui/icons-material/PlayCircleOutline';
+import YouTubeIcon from '@mui/icons-material/YouTube';
 
 const Artist = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { playPreview, stopPreview, currentlyPlaying } = usePlayer();
+  const { playPreview, stopPreview, playYoutube, currentlyPlaying } = usePlayer();
+  const { info, error, success } = useNotification();
   const [artist, setArtist] = useState(null);
   const [albums, setAlbums] = useState([]);
   const [topTracks, setTopTracks] = useState([]);
@@ -86,6 +90,18 @@ const Artist = () => {
       return;
     }
     playPreview(track);
+  };
+
+  const handleOpenYoutube = async (track) => {
+    const query = `${track.title} ${track.artist.name}`;
+    info('Buscando vídeo no YouTube...');
+    const videoData = await fetchYoutubeVideoData(query);
+    if (!videoData?.videoId) {
+      error('Não foi possível encontrar o vídeo no YouTube.');
+      return;
+    }
+    playYoutube(track, videoData.videoId);
+    success('Reproduzindo no player do app.');
   };
 
   const formatDuration = (duration) => {
@@ -207,6 +223,15 @@ const Artist = () => {
                     }}
                   >
                     <PreviewIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="YouTube">
+                  <IconButton
+                    size="small"
+                    onClick={() => handleOpenYoutube(track)}
+                    color="error"
+                  >
+                    <YouTubeIcon />
                   </IconButton>
                 </Tooltip>
               </ListItem>

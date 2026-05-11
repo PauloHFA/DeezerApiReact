@@ -8,12 +8,16 @@ export const PlayerProvider = ({ children }) => {
   const [volume, setVolume] = useState(0.5);
   const [queue, setQueue] = useState([]);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [youtubeVideoId, setYoutubeVideoId] = useState(null);
+  const [youtubeThumbnail, setYoutubeThumbnail] = useState(null);
   const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
 
   const playTrack = useCallback((track) => {
     setCurrentTrack(track);
     setIsPlaying(true);
     setPreviewUrl(null);
+    setYoutubeVideoId(null);
+    setCurrentlyPlaying(track?.id ?? null);
   }, []);
 
   const pauseTrack = useCallback(() => {
@@ -55,6 +59,7 @@ export const PlayerProvider = ({ children }) => {
   const playPreview = useCallback((trackOrUrl) => {
     if (typeof trackOrUrl === 'string') {
       setPreviewUrl(trackOrUrl);
+      setYoutubeVideoId(null);
       setIsPlaying(true);
       return;
     }
@@ -62,6 +67,7 @@ export const PlayerProvider = ({ children }) => {
     if (trackOrUrl?.preview) {
       setCurrentTrack(trackOrUrl);
       setPreviewUrl(trackOrUrl.preview);
+      setYoutubeVideoId(null);
       setCurrentlyPlaying(trackOrUrl.id);
       setIsPlaying(true);
       return;
@@ -72,6 +78,22 @@ export const PlayerProvider = ({ children }) => {
 
   const stopPreview = useCallback(() => {
     setPreviewUrl(null);
+    setCurrentlyPlaying(null);
+    setIsPlaying(false);
+  }, []);
+
+  const playYoutube = useCallback((track, videoId, thumbnailUrl = null) => {
+    setCurrentTrack(track);
+    setYoutubeVideoId(videoId);
+    setYoutubeThumbnail(thumbnailUrl);
+    setPreviewUrl(null);
+    setCurrentlyPlaying(track?.id ?? null);
+    setIsPlaying(true);
+  }, []);
+
+  const stopYoutube = useCallback(() => {
+    setYoutubeVideoId(null);
+    setYoutubeThumbnail(null);
     setCurrentlyPlaying(null);
     setIsPlaying(false);
   }, []);
@@ -87,10 +109,13 @@ export const PlayerProvider = ({ children }) => {
     volume,
     queue,
     previewUrl,
+    youtubeVideoId,
+    youtubeThumbnail,
     currentlyPlaying,
 
     // Ações
     playTrack,
+    playYoutube,
     pauseTrack,
     resumeTrack,
     togglePlayPause,
@@ -101,6 +126,7 @@ export const PlayerProvider = ({ children }) => {
     playNext,
     playPreview,
     stopPreview,
+    stopYoutube,
     setCurrentlyPlayingTrack,
   };
 

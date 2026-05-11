@@ -10,7 +10,8 @@ import {
   Container,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { searchArtists, searchTracks, searchAlbums, searchPlaylists } from '@/services/deezerApi';
+import { searchArtists, searchTracks, searchAlbums, searchPlaylists, getTrackPreview } from '@/services/deezerApi';
+import { fetchYoutubeVideoData } from '@/services/youtubeApi';
 import { usePlayer } from '@/hooks/usePlayer';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useNotification } from '@/hooks/useNotification';
@@ -34,8 +35,8 @@ interface SearchResults {
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
-  const { currentlyPlaying, playPreview, stopPreview } = usePlayer();
-  const { info } = useNotification();
+  const { currentlyPlaying, playPreview, stopPreview, playYoutube } = usePlayer();
+  const { info, error, success } = useNotification();
   const debouncedQuery = useDebounce(searchQuery, 500);
 
   // Create search function with cache
@@ -81,14 +82,52 @@ const Search = () => {
   );
 
   const handlePreviewTrack = useCallback(
-    (track: Track) => {
+    async (track: Track) => {
       if (currentlyPlaying === track.id) {
         stopPreview();
-      } else {
-        playPreview(track);
+        return;
       }
+
+      const previewUrl = track.preview || (await getTrackPreview(track.id));
+      if (previewUrl) {
+        playPreview(track.preview ? track : { ...track, preview: previewUrl });
+        return;
+      }
+
+      const query = `${track.title} ${track.artist.name}`;
+      info('Preview não disponível. Buscando alternativa no YouTube...');
+      const videoData = await fetchYoutubeVideoData(query);
+      if (videoData) {
+        playYoutube(track, videoData.videoId, videoData.thumbnailUrl);
+        success('Reproduzindo via YouTube.');
+        return;
+      }
+
+      window.open(
+        `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
+        '_blank'
+      );
     },
-    [currentlyPlaying, playPreview, stopPreview]
+    [currentlyPlaying, playPreview, stopPreview, playYoutube, info, success]
+  );
+
+  const handleOpenYoutube = useCallback(
+    async (track: Track) => {
+      const query = `${track.title} ${track.artist.name}`;
+      info('Buscando vídeo no YouTube...');
+      const videoData = await fetchYoutubeVideoData(query);
+      if (!videoData) {
+        window.open(
+          `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
+          '_blank'
+        );
+        error('Não foi possível encontrar o vídeo automaticamente. Abrindo YouTube.');
+        return;
+      }
+      playYoutube(track, videoData.videoId, videoData.thumbnailUrl);
+      success('Reproduzindo no player do app.');
+    },
+    [info, error, success, playYoutube]
   );
 
   useEffect(() => {
@@ -236,7 +275,13 @@ const Search = () => {
                 </Box>
                 <Grid container spacing={3} justifyContent="center">
                   {results.tracks.map((track) => (
-                    <TrackCard key={track.id} track={track} onPreview={handlePreviewTrack} currentlyPlaying={currentlyPlaying} />
+                    <TrackCard
+                      key={track.id}
+                      track={track}
+                      isPlaying={currentlyPlaying === track.id}
+                      onPreview={handlePreviewTrack}
+                      onYoutube={handleOpenYoutube}
+                    />
                   ))}
                 </Grid>
               </Box>

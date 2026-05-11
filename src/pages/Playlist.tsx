@@ -18,9 +18,12 @@ import {
   Paper,
 } from '@mui/material';
 import { getPlaylist } from '../services/deezerApi';
+import { fetchYoutubeVideoData } from '../services/youtubeApi';
 import { usePlayer } from '../hooks/usePlayer';
+import { useNotification } from '../hooks/useNotification';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PreviewIcon from '@mui/icons-material/PlayCircleOutline';
+import YouTubeIcon from '@mui/icons-material/YouTube';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -29,10 +32,11 @@ import { Button } from '@mui/material';
 const Playlist = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { playTrack, playPreview, stopPreview, currentlyPlaying } = usePlayer();
+  const { playTrack, playPreview, stopPreview, playYoutube, currentlyPlaying } = usePlayer();
+  const { info, error: notifyError, success } = useNotification();
   const [playlist, setPlaylist] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [pageError, setPageError] = useState(null);
 
   useEffect(() => {
     const fetchPlaylistData = async () => {
@@ -40,10 +44,10 @@ const Playlist = () => {
         setLoading(true);
         const playlistData = await getPlaylist(id);
         setPlaylist(playlistData);
-        setError(null);
+        setPageError(null);
       } catch (error) {
         console.error('Error fetching playlist:', error);
-        setError('Falha ao carregar a playlist. Tente novamente mais tarde.');
+        setPageError('Falha ao carregar a playlist. Tente novamente mais tarde.');
       } finally {
         setLoading(false);
       }
@@ -60,6 +64,17 @@ const Playlist = () => {
     playPreview(track);
   };
 
+  const handleOpenYoutube = async (track) => {
+    const query = `${track.title} ${track.artist.name}`;
+    info('Buscando vídeo no YouTube...');
+    const videoData = await fetchYoutubeVideoData(query);
+    if (!videoData?.videoId) {
+      notifyError('Não foi possível encontrar o vídeo no YouTube.');
+      return;
+    }
+    playYoutube(track, videoData.videoId);
+  };
+
   const formatDuration = (duration) => {
     const minutes = Math.floor(duration / 60);
     const seconds = String(duration % 60).padStart(2, '0');
@@ -74,11 +89,11 @@ const Playlist = () => {
     );
   }
 
-  if (error || !playlist) {
+  if (pageError || !playlist) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="70vh">
         <Typography variant="h5" color="error">
-          {error || 'Playlist não encontrada'}
+          {pageError || 'Playlist não encontrada'}
         </Typography>
       </Box>
     );
@@ -152,6 +167,15 @@ const Playlist = () => {
                         sx={{ color: currentlyPlaying === track.id ? 'primary.main' : 'inherit' }}
                       >
                         <PreviewIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="YouTube">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenYoutube(track)}
+                        color="error"
+                      >
+                        <YouTubeIcon />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Tocar">

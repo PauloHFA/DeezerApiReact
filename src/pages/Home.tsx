@@ -9,8 +9,10 @@ import {
   Chip,
   Typography,
 } from '@mui/material';
-import { searchArtists, getTopTracks, getTopPlaylists } from '../services/deezerApi';
+import { searchArtists, getTopTracks, getTopPlaylists, getTrackPreview } from '../services/deezerApi';
+import { fetchYoutubeVideoData } from '../services/youtubeApi';
 import { usePlayer } from '../hooks/usePlayer';
+import { useNotification } from '../hooks/useNotification';
 import { ArtistCard, TrackCard, PlaylistCard } from '../components/CardComponents';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -19,9 +21,10 @@ import QueueMusicIcon from '@mui/icons-material/QueueMusic';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { playTrack, playPreview, stopPreview, currentlyPlaying } = usePlayer();
+  const { playTrack, playPreview, stopPreview, playYoutube, currentlyPlaying } = usePlayer();
+  const { info, error: notifyError, success } = useNotification();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [pageError, setPageError] = useState<string | null>(null);
   const [featuredArtists, setFeaturedArtists] = useState([]);
   const [topTracks, setTopTracks] = useState([]);
   const [topPlaylists, setTopPlaylists] = useState([]);
@@ -39,10 +42,10 @@ const Home = () => {
         setFeaturedArtists(artistsResponse.data.slice(0, 8));
         setTopTracks(tracksResponse.data.slice(0, 8));
         setTopPlaylists(playlistsResponse.data.slice(0, 8));
-        setError(null);
+        setPageError(null);
       } catch (error) {
         console.error('Error fetching data:', error);
-        setError('Failed to load content. Please try again later.');
+        setPageError('Failed to load content. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -52,14 +55,52 @@ const Home = () => {
   }, []);
 
   const handlePreviewTrack = useCallback(
-    (track) => {
+    async (track) => {
       if (currentlyPlaying === track.id) {
         stopPreview();
         return;
       }
-      playPreview(track);
+
+      const previewUrl = track.preview || (await getTrackPreview(track.id));
+      if (previewUrl) {
+        playPreview(track.preview ? track : { ...track, preview: previewUrl });
+        return;
+      }
+
+      const query = `${track.title} ${track.artist.name}`;
+      info('Preview não disponível. Buscando alternativa no YouTube...');
+      const videoData = await fetchYoutubeVideoData(query);
+      if (videoData) {
+        playYoutube(track, videoData.videoId, videoData.thumbnailUrl);
+        success('Reproduzindo via YouTube.');
+        return;
+      }
+
+      window.open(
+        `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
+        '_blank'
+      );
     },
-    [currentlyPlaying, playPreview, stopPreview]
+    [currentlyPlaying, playPreview, stopPreview, playYoutube, info, success]
+  );
+
+  const handleOpenYoutube = useCallback(
+    async (track) => {
+      const query = `${track.title} ${track.artist.name}`;
+      info('Buscando vídeo no YouTube...');
+      const videoData = await fetchYoutubeVideoData(query);
+      if (!videoData) {
+        window.open(
+          `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
+          '_blank'
+        );
+        notifyError('Não foi possível encontrar o vídeo automaticamente. Abrindo YouTube.');
+        return;
+      }
+      playYoutube(track, videoData.videoId, videoData.thumbnailUrl);
+      success('Reproduzindo no player do app.');
+    },
+    [info, notifyError, success, playYoutube]
   );
 
   if (loading) {
@@ -77,7 +118,7 @@ const Home = () => {
     );
   }
 
-  if (error) {
+  if (pageError) {
     return (
       <Box
         sx={{
@@ -90,7 +131,7 @@ const Home = () => {
         }}
       >
         <Typography variant="h5" color="error">
-          {error}
+          {pageError}
         </Typography>
         <Button
           variant="contained"
@@ -199,6 +240,7 @@ const Home = () => {
                 isPlaying={currentlyPlaying === track.id}
                 onPlay={() => navigate(`/album/${track.album.id}`)}
                 onPreview={() => handlePreviewTrack(track)}
+                onYoutube={() => handleOpenYoutube(track)}
               />
             </Grid>
           ))}

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useDebounce } from '../useDebounce';
 
 describe('useDebounce', () => {
   beforeEach(() => {
@@ -16,7 +16,7 @@ describe('useDebounce', () => {
     expect(result.current).toBe('test');
   });
 
-  it('should debounce value changes', async () => {
+  it('should debounce value changes', () => {
     const { result, rerender } = renderHook(
       ({ value, delay }: { value: string; delay: number }) =>
         useDebounce(value, delay),
@@ -34,12 +34,10 @@ describe('useDebounce', () => {
       vi.advanceTimersByTime(500);
     });
 
-    await waitFor(() => {
-      expect(result.current).toBe('updated');
-    });
+    expect(result.current).toBe('updated');
   });
 
-  it('should reset debounce timer on value change', async () => {
+  it('should reset debounce timer on value change', () => {
     const { result, rerender } = renderHook(
       ({ value, delay }: { value: string; delay: number }) =>
         useDebounce(value, delay),
@@ -62,8 +60,6 @@ describe('useDebounce', () => {
       vi.advanceTimersByTime(500); // Avança com o novo timer
     });
 
-    await waitFor(() => {
-      expect(result.current).toBe('third');
-    });
+    expect(result.current).toBe('third');
   });
 });

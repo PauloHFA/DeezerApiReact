@@ -33,8 +33,5 @@
       "@contexts/*": ["src/contexts/*"],
       "@types/*": ["src/types/*"]
     }
-  },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"],
-  "references": [{ "path": "./tsconfig.app.json" }]
+  }
 }

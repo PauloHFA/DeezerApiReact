@@ -15,7 +15,6 @@ import {
   SkipNext,
   SkipPrevious,
   VolumeUp,
-  OpenInNew,
 } from '@mui/icons-material';
 import { usePlayer } from '../hooks/usePlayer';
 
@@ -26,10 +25,13 @@ const Player = () => {
     volume,
     queue,
     previewUrl,
+    youtubeVideoId,
+    youtubeThumbnail,
     pauseTrack,
     resumeTrack,
     setPlayerVolume,
     playNext,
+    stopYoutube,
   } = usePlayer();
 
   const audioRef = useRef(null);
@@ -39,12 +41,17 @@ const Player = () => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    // Update source
+    // Only manage audio when we're using preview playback.
+    if (youtubeVideoId) {
+      audio.pause();
+      audio.src = '';
+      return;
+    }
+
     if (previewUrl) {
       audio.src = previewUrl;
     }
 
-    // Update play state
     if (previewUrl && isPlaying) {
       audio.play().catch((error) => {
         console.error('Error playing preview:', error);
@@ -53,19 +60,21 @@ const Player = () => {
       audio.pause();
     }
 
-    // Update volume
     audio.volume = volume;
 
-    // Cleanup: pause and stop audio when component unmounts
     return () => {
       audio.pause();
       audio.src = '';
     };
-  }, [previewUrl, isPlaying, volume]);
+  }, [previewUrl, isPlaying, volume, youtubeVideoId]);
 
   const handlePlayPause = () => {
     if (isPlaying) {
-      pauseTrack();
+      if (youtubeVideoId) {
+        stopYoutube();
+      } else {
+        pauseTrack();
+      }
     } else {
       resumeTrack();
     }
@@ -107,23 +116,11 @@ const Player = () => {
             <Typography variant="body2" color="text.secondary" noWrap>
               {currentTrack.artist.name}
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-              <Chip label="Preview (30s)" size="small" variant="outlined" />
-              {currentTrack.link && (
-                <Button
-                  size="small"
-                  endIcon={<OpenInNew />}
-                  onClick={() => window.open(currentTrack.link, '_blank')}
-                  sx={{
-                    textTransform: 'none',
-                    color: 'primary.main',
-                    '&:hover': {
-                      backgroundColor: 'rgba(29, 185, 84, 0.1)',
-                    },
-                  }}
-                >
-                  Ouça Completo
-                </Button>
+            <Box sx={{ display: 'flex', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+              {youtubeVideoId ? (
+                <Chip label="YouTube ativo" size="small" color="error" />
+              ) : (
+                <Chip label="Preview (30s)" size="small" variant="outlined" />
               )}
             </Box>
           </Box>
@@ -149,6 +146,30 @@ const Player = () => {
           </Box>
         </Stack>
       </Box>
+
+      {youtubeVideoId && youtubeThumbnail && (
+        <Box sx={{ mt: 2, width: '100%', display: 'flex', justifyContent: 'center' }}>
+          <img
+            src={youtubeThumbnail}
+            alt="YouTube thumbnail"
+            style={{ width: '100%', maxHeight: 180, objectFit: 'cover', borderRadius: 12 }}
+          />
+        </Box>
+      )}
+
+      {youtubeVideoId && (
+        <Box sx={{ mt: 2, width: '100%', height: 180, position: 'relative' }}>
+          <iframe
+            title="YouTube player"
+            width="100%"
+            height="100%"
+            src={`https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&playsinline=1&rel=0&enablejsapi=1`}
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+            style={{ border: 0, borderRadius: 12 }}
+          />
+        </Box>
+      )}
 
       <audio
         ref={audioRef}

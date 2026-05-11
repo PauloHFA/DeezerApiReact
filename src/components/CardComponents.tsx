@@ -8,12 +8,36 @@ import {
   Box,
   Tooltip,
 } from '@mui/material';
-import { PlayArrow, Pause } from '@mui/icons-material';
+import { PlayArrow, Pause, YouTube } from '@mui/icons-material';
+import type { Track, Artist, Album, Playlist } from '@/types';
+
+interface TrackCardProps {
+  track: Track;
+  isPlaying: boolean;
+  onPlay?: (track: Track) => void | Promise<void>;
+  onPreview?: (track: Track) => void | Promise<void>;
+  onYoutube?: (track: Track) => void | Promise<void>;
+}
+
+interface ArtistCardProps {
+  artist: Artist;
+  onClick?: () => void;
+}
+
+interface AlbumCardProps {
+  album: Album;
+  onClick?: () => void;
+}
+
+interface PlaylistCardProps {
+  playlist: Playlist;
+  onClick?: () => void;
+}
 
 /**
  * TrackCard Component - Memoized para evitar re-renders
  */
-export const TrackCard = memo(({ track, isPlaying, onPlay, onPreview }) => {
+export const TrackCard = memo<TrackCardProps>(({ track, isPlaying, onPlay, onPreview, onYoutube }) => {
   return (
     <Card
       sx={{
@@ -51,6 +75,11 @@ export const TrackCard = memo(({ track, isPlaying, onPlay, onPreview }) => {
               {isPlaying ? <Pause /> : <PlayArrow />}
             </IconButton>
           </Tooltip>
+          <Tooltip title="YouTube">
+            <IconButton size="small" onClick={() => onYoutube?.(track)} color="error">
+              <YouTube />
+            </IconButton>
+          </Tooltip>
         </Box>
       </CardContent>
     </Card>
@@ -62,7 +91,7 @@ TrackCard.displayName = 'TrackCard';
 /**
  * ArtistCard Component - Memoized
  */
-export const ArtistCard = memo(({ artist, onClick }) => {
+export const ArtistCard = memo<ArtistCardProps>(({ artist, onClick }) => {
   return (
     <Card
       onClick={onClick}
@@ -100,7 +129,7 @@ ArtistCard.displayName = 'ArtistCard';
 /**
  * AlbumCard Component - Memoized
  */
-export const AlbumCard = memo(({ album, onClick }) => {
+export const AlbumCard = memo<AlbumCardProps>(({ album, onClick }) => {
   return (
     <Card
       onClick={onClick}
@@ -140,7 +169,7 @@ AlbumCard.displayName = 'AlbumCard';
 /**
  * PlaylistCard Component - Memoized
  */
-export const PlaylistCard = memo(({ playlist, onClick }) => {
+export const PlaylistCard = memo<PlaylistCardProps>(({ playlist, onClick }) => {
   return (
     <Card
       onClick={onClick}
