@@ -32,7 +32,7 @@ import { Button } from '@mui/material';
 const Playlist = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { playTrack, playPreview, stopPreview, playYoutube, currentlyPlaying } = usePlayer();
+  const { playTrack, playPreview, stopPreview, playYoutube, currentlyPlaying, matchCurrentTrack } = usePlayer();
   const { info, error: notifyError, success } = useNotification();
   const [playlist, setPlaylist] = useState(null);
   const [loading, setLoading] = useState(true);

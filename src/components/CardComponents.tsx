@@ -8,7 +8,7 @@ import {
   Box,
   Tooltip,
 } from '@mui/material';
-import { PlayArrow, Pause, YouTube } from '@mui/icons-material';
+import { PlayArrow, Pause, YouTube, MusicNote } from '@mui/icons-material';
 import type { Track, Artist, Album, Playlist } from '@/types';
 
 interface TrackCardProps {
@@ -17,6 +17,8 @@ interface TrackCardProps {
   onPlay?: (track: Track) => void | Promise<void>;
   onPreview?: (track: Track) => void | Promise<void>;
   onYoutube?: (track: Track) => void | Promise<void>;
+  onSpotify?: (track: Track) => void | Promise<void>;
+  hasSpotify?: boolean;
 }
 
 interface ArtistCardProps {
@@ -37,7 +39,7 @@ interface PlaylistCardProps {
 /**
  * TrackCard Component - Memoized para evitar re-renders
  */
-export const TrackCard = memo<TrackCardProps>(({ track, isPlaying, onPlay, onPreview, onYoutube }) => {
+export const TrackCard = memo<TrackCardProps>(({ track, isPlaying, onPlay, onPreview, onYoutube, onSpotify, hasSpotify }) => {
   return (
     <Card
       sx={{
@@ -69,7 +71,7 @@ export const TrackCard = memo<TrackCardProps>(({ track, isPlaying, onPlay, onPre
               <PlayArrow />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Preview">
+          <Tooltip title="Preview (30s)">
             <IconButton size="small" onClick={() => onPreview?.(track)} 
               sx={{ color: isPlaying ? 'primary.main' : 'inherit' }}>
               {isPlaying ? <Pause /> : <PlayArrow />}
@@ -80,6 +82,13 @@ export const TrackCard = memo<TrackCardProps>(({ track, isPlaying, onPlay, onPre
               <YouTube />
             </IconButton>
           </Tooltip>
+          {hasSpotify && onSpotify && (
+            <Tooltip title="Spotify (completa)">
+              <IconButton size="small" onClick={() => onSpotify?.(track)} color="success">
+                          <MusicNote />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       </CardContent>
     </Card>

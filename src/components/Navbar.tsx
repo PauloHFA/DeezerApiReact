@@ -3,6 +3,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import SpotifyIcon from '@mui/icons-material/MusicNote'; // Using MusicNote as Spotify icon
 
 const Navbar = () => {
   return (
@@ -52,6 +53,20 @@ const Navbar = () => {
             >
               Search
             </Button>
+            <Button
+              color="inherit"
+              component={RouterLink}
+              to="/auth/spotify"
+              startIcon={<SpotifyIcon />}
+              sx={{
+                '&:hover': {
+                  backgroundColor: 'rgba(29, 185, 84, 0.1)',
+                },
+                color: '#1DB954',
+              }}
+            >
+              Conectar Spotify
+            </Button>
           </Box>
         </Toolbar>
       </Container>
@@ -59,4 +74,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar; 
+export default Navbar;

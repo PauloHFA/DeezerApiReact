@@ -16,6 +16,8 @@ const Artist = lazy(() => import('./pages/Artist'));
 const Search = lazy(() => import('./pages/Search'));
 const Album = lazy(() => import('./pages/Album'));
 const Playlist = lazy(() => import('./pages/Playlist'));
+const SpotifyLogin = lazy(() => import('./pages/SpotifyLogin'));
+const SpotifyCallback = lazy(() => import('./pages/SpotifyCallback'));
 
 const theme = createTheme({
   palette: {
@@ -124,7 +126,9 @@ function App() {
                     <Route path="/album/:id" element={<Album />} />
                     <Route path="/playlist/:id" element={<Playlist />} />
                     <Route path="/search" element={<Search />} />
-                  </Routes>
+                                      <Route path="/auth/spotify" element={<SpotifyLogin />} />
+                                      <Route path="/callback" element={<SpotifyCallback />} />
+                                    </Routes>
                 </Suspense>
               </Container>
               <Player />

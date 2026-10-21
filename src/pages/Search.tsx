@@ -35,7 +35,7 @@ interface SearchResults {
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
-  const { currentlyPlaying, playPreview, stopPreview, playYoutube } = usePlayer();
+  const { currentlyPlaying, playPreview, stopPreview, playYoutube, matchCurrentTrack } = usePlayer();
   const { info, error, success } = useNotification();
   const debouncedQuery = useDebounce(searchQuery, 500);
 
@@ -130,7 +130,18 @@ const Search = () => {
     [info, error, success, playYoutube]
   );
 
-  useEffect(() => {
+    const handleOpenSpotify = useCallback(
+      async (track: Track) => {
+        info('Buscando no Spotify...');
+        await matchCurrentTrack();
+        // The matchCurrentTrack will update matchedTrack in context
+        // The actual Spotify playback is handled by the Player component
+        success('Verifique o player para opções do Spotify.');
+      },
+      [info, success, matchCurrentTrack]
+    );
+
+    useEffect(() => {
     if (totalResults === 0 && !loading && debouncedQuery.trim()) {
       info('Nenhum resultado encontrado');
     }
@@ -281,11 +292,13 @@ const Search = () => {
                       isPlaying={currentlyPlaying === track.id}
                       onPreview={handlePreviewTrack}
                       onYoutube={handleOpenYoutube}
-                    />
-                  ))}
-                </Grid>
-              </Box>
-            )}
+                                  onSpotify={handleOpenSpotify}
+                                  hasSpotify={true} // Will be determined by matchCurrentTrack
+                                />
+                              ))}
+                            </Grid>
+                          </Box>
+                        )}
           </Box>
         ) : (
           <Box

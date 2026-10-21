@@ -33,7 +33,7 @@ import YouTubeIcon from '@mui/icons-material/YouTube';
 const Artist = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { playPreview, stopPreview, playYoutube, currentlyPlaying } = usePlayer();
+  const { playPreview, stopPreview, playYoutube, currentlyPlaying, matchCurrentTrack } = usePlayer();
   const { info, error, success } = useNotification();
   const [artist, setArtist] = useState(null);
   const [albums, setAlbums] = useState([]);

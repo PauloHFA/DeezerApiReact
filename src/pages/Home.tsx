@@ -21,7 +21,7 @@ import QueueMusicIcon from '@mui/icons-material/QueueMusic';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { playTrack, playPreview, stopPreview, playYoutube, currentlyPlaying } = usePlayer();
+  const { playTrack, playPreview, stopPreview, playYoutube, currentlyPlaying, matchCurrentTrack } = usePlayer();
   const { info, error: notifyError, success } = useNotification();
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
