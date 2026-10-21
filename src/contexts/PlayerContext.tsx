@@ -5,6 +5,15 @@ import { spotifyWebPlaybackSDK } from '../services/spotifyWebPlayback';
 import { trackMatchingService, MatchedTrack } from '../services/trackMatching';
 import type { Track } from '../types';
 
+// Persisted player state interface
+interface PersistedPlayerState {
+  volume: number;
+  queue: Track[];
+  playbackSource: PlaybackSource;
+  currentTrackId: number | null;
+  isPlaying: boolean;
+}
+
 // Playback source types
 export type PlaybackSource = 'deezer' | 'youtube' | 'spotify';
 
@@ -136,7 +145,36 @@ interface PlayerContextValue extends PlayerState {
   const spotifyPlayerRef = useRef(spotifyWebPlaybackSDK);
   const progressIntervalRef = useRef<number | null>(null);
 
-  // Initialize YouTube Player API
+    // Persist player state to localStorage
+    useEffect(() => {
+      const savedState = localStorage.getItem('ph-music-player-state');
+      if (savedState) {
+        try {
+          const parsed: PersistedPlayerState = JSON.parse(savedState);
+          setVolume(parsed.volume ?? 0.5);
+          setQueue(parsed.queue ?? []);
+          setPlaybackSource(parsed.playbackSource ?? 'deezer');
+          setIsPlaying(false); // Don't auto-play on restore
+          // currentTrackId will be restored when track is loaded
+        } catch (e) {
+          console.warn('Failed to parse persisted player state:', e);
+        }
+      }
+    }, []);
+
+    // Save player state to localStorage on changes
+    useEffect(() => {
+      const stateToPersist: PersistedPlayerState = {
+        volume,
+        queue,
+        playbackSource,
+        currentTrackId: currentTrack?.id ?? null,
+        isPlaying,
+      };
+      localStorage.setItem('ph-music-player-state', JSON.stringify(stateToPersist));
+    }, [volume, queue, playbackSource, currentTrack, isPlaying]);
+
+    // Initialize YouTube Player API
   useEffect(() => {
     youtubePlayerRef.current.loadAPI().catch(console.error);
   }, []);

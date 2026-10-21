@@ -90,3 +90,8 @@ global.Spotify = {
     nextTrack: vi.fn().mockResolvedValue(undefined),
   })),
 };
+
+// Clear localStorage before each test to avoid state leakage
+beforeEach(() => {
+  localStorage.clear();
+});
