@@ -51,8 +51,9 @@ describe('Home Page Integration Tests', () => {
 
       renderHome();
 
-      expect(screen.getByRole('progressbar')).toBeInTheDocument();
-    });
+        // Check for skeleton loading state (Skeleton components are rendered)
+        expect(screen.getByTestId('hero-skeleton')).toBeInTheDocument();
+      });
 
     it('should render content after data loads', async () => {
       mockDeezerApi.searchArtists.mockResolvedValue({ data: [{ id: 1, name: 'Artist 1', picture_big: 'a1.jpg' }] });

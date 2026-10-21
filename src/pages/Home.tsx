@@ -8,12 +8,14 @@ import {
   Button,
   Chip,
   Typography,
+  Skeleton,
 } from '@mui/material';
 import { searchArtists, getTopTracks, getTopPlaylists, getTrackPreview } from '../services/deezerApi';
 import { fetchYoutubeVideoData } from '../services/youtubeApi';
 import { usePlayer } from '../hooks/usePlayer';
 import { useNotification } from '../hooks/useNotification';
 import { ArtistCard, TrackCard, PlaylistCard } from '../components/CardComponents';
+import { SkeletonGrid, SkeletonTrackList } from '../components/SkeletonLoader';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import AlbumIcon from '@mui/icons-material/Album';
@@ -105,18 +107,63 @@ const Home = () => {
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-        }}
-      >
-        <CircularProgress size={60} />
-      </Box>
-    );
-  }
+        <Box sx={{ width: '100%', minHeight: '100vh', py: 4, pb: 10 }}>
+          {/* Hero Section Skeleton */}
+          <Box data-testid="hero-skeleton" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 8 }}>
+            <Paper
+              elevation={3}
+              sx={{
+                p: 6,
+                width: '100%',
+                maxWidth: '1000px',
+                background: 'linear-gradient(135deg, #1A1A1A 0%, #000000 100%)',
+                borderRadius: '16px',
+              }}
+            >
+              <Box sx={{ position: 'relative', zIndex: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 4 }}>
+                  <Skeleton variant="circular" width={60} height={60} />
+                  <Skeleton variant="text" height={40} width="40%" />
+                </Box>
+                <Skeleton variant="text" height={24} width="80%" sx={{ mb: 3 }} />
+                <Skeleton variant="rectangular" height={56} width="200px" />
+              </Box>
+            </Paper>
+          </Box>
+
+          {/* Featured Artists Skeleton */}
+          <Box sx={{ mb: 8 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, px: 2 }}>
+              <Skeleton variant="circular" width={32} height={32} />
+              <Skeleton variant="text" height={28} width="30%" />
+            </Box>
+            <Grid container spacing={3}>
+              <SkeletonGrid count={8} />
+            </Grid>
+          </Box>
+
+          {/* Top Tracks Skeleton */}
+          <Box sx={{ mb: 8 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, px: 2 }}>
+              <Skeleton variant="circular" width={32} height={32} />
+              <Skeleton variant="text" height={28} width="30%" />
+            </Box>
+            <SkeletonTrackList count={8} />
+          </Box>
+
+          {/* Top Playlists Skeleton */}
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, px: 2 }}>
+              <Skeleton variant="circular" width={32} height={32} />
+              <Skeleton variant="text" height={28} width="30%" />
+            </Box>
+            <Grid container spacing={3}>
+              <SkeletonGrid count={8} />
+            </Grid>
+          </Box>
+        </Box>
+      );
+    }
 
   if (pageError) {
     return (

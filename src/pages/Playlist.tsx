@@ -16,6 +16,7 @@ import {
   Tooltip,
   Chip,
   Paper,
+  Skeleton,
 } from '@mui/material';
 import { getPlaylist } from '../services/deezerApi';
 import { fetchYoutubeVideoData } from '../services/youtubeApi';
@@ -83,11 +84,60 @@ const Playlist = () => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="70vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
+        <Box sx={{ py: 4, width: '100%', maxWidth: '1200px', mx: 'auto' }}>
+          <Button
+            startIcon={<ArrowBackIosNewIcon />}
+            onClick={() => navigate(-1)}
+            sx={{ mb: 3, color: 'primary.main' }}
+          >
+            Voltar
+          </Button>
+
+          {/* Playlist Header Skeleton */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 4, flexWrap: 'wrap' }}>
+            <Skeleton variant="rectangular" width={280} height={280} sx={{ borderRadius: '16px' }} />
+            <Box sx={{ flex: 1, minWidth: 280 }}>
+              <Skeleton variant="text" height={48} width="60%" sx={{ mb: 1 }} />
+              <Skeleton variant="text" height={24} width="40%" sx={{ mb: 1 }} />
+              <Skeleton variant="text" height={20} width="50%" sx={{ mb: 2 }} />
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Skeleton variant="rectangular" height={32} width="120px" />
+                <Skeleton variant="rectangular" height={32} width="120px" />
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Tracks Skeleton */}
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+              <MusicNoteIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+              <Typography variant="h4" component="h2">Faixas</Typography>
+            </Box>
+            <Box>
+              {Array.from({ length: 10 }).map((_, idx) => (
+                <Box
+                  key={idx}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 2,
+                    borderBottom: '1px solid rgba(255,255,255,0.1)',
+                  }}
+                >
+                  <Skeleton variant="circular" width={40} height={40} />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="text" height={20} sx={{ mb: 1 }} />
+                    <Skeleton variant="text" height={14} width="60%" />
+                  </Box>
+                  <Skeleton variant="circular" width={32} height={32} />
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        </Box>
+      );
+    }
 
   if (pageError || !playlist) {
     return (

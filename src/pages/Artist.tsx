@@ -17,6 +17,7 @@ import {
   Divider,
   Tooltip,
   Button,
+  Skeleton,
 } from '@mui/material';
 import { getArtist, getArtistAlbums, getArtistTopTracks, getAlbumTracks } from '../services/deezerApi';
 import { fetchYoutubeVideoData } from '../services/youtubeApi';
@@ -112,11 +113,98 @@ const Artist = () => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" my={4}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+        <Box sx={{ py: 4 }}>
+          <Button
+            startIcon={<ArrowBackIosNewIcon />}
+            onClick={() => navigate(-1)}
+            sx={{ mb: 3, color: 'primary.main' }}
+          >
+            Voltar
+          </Button>
+        
+          {/* Artist Header Skeleton */}
+          <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+            <Skeleton variant="circular" width={200} height={200} />
+            <Box sx={{ flex: 1, minWidth: 280 }}>
+              <Skeleton variant="text" height={48} width="60%" sx={{ mb: 1 }} />
+              <Skeleton variant="text" height={24} width="40%" sx={{ mb: 1 }} />
+              <Skeleton variant="text" height={20} width="30%" sx={{ mb: 2 }} />
+              <Skeleton variant="rectangular" height={36} width="150px" />
+            </Box>
+          </Box>
+
+          {/* Top Tracks Skeleton */}
+          <Box sx={{ mb: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+              <MusicNoteIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+              <Typography variant="h4" component="h2">Top Tracks</Typography>
+            </Box>
+            <Box>
+              {Array.from({ length: 5 }).map((_, idx) => (
+                <Box
+                  key={idx}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 2,
+                    borderBottom: '1px solid rgba(255,255,255,0.1)',
+                  }}
+                >
+                  <Skeleton variant="circular" width={40} height={40} />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="text" height={20} sx={{ mb: 1 }} />
+                    <Skeleton variant="text" height={14} width="60%" />
+                  </Box>
+                  <Skeleton variant="circular" width={32} height={32} />
+                </Box>
+              ))}
+            </Box>
+          </Box>
+
+          {/* Albums Skeleton */}
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+              <AlbumIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+              <Typography variant="h4" component="h2">Álbuns</Typography>
+            </Box>
+            <Grid container spacing={3}>
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={idx}>
+                  <Card
+                    sx={{
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      background: 'linear-gradient(to bottom, #1A1A1A, #000000)',
+                    }}
+                  >
+                    <Skeleton
+                      variant="rectangular"
+                      height={250}
+                      sx={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                    />
+                    <CardContent sx={{ flexGrow: 1 }}>
+                      <Skeleton
+                        variant="text"
+                        height={24}
+                        sx={{ mb: 1, backgroundColor: 'rgba(255,255,255,0.1)' }}
+                      />
+                      <Skeleton
+                        variant="text"
+                        height={16}
+                        width="70%"
+                        sx={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                      />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        </Box>
+      );
+    }
 
   if (!artist) {
     return (
