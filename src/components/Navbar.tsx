@@ -1,11 +1,16 @@
-import { AppBar, Toolbar, Typography, Button, Box, Container } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, Container, IconButton, Tooltip } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import SpotifyIcon from '@mui/icons-material/MusicNote'; // Using MusicNote as Spotify icon
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Navbar = () => {
+  const { mode, toggleTheme } = useTheme();
+
   return (
     <AppBar position="static" elevation={0} sx={{ background: 'linear-gradient(to right, #000000, #1A1A1A)' }}>
       <Container maxWidth="xl">
@@ -68,6 +73,11 @@ const Navbar = () => {
               Conectar Spotify
             </Button>
           </Box>
+          <Tooltip title={mode === 'dark' ? 'Alternar para tema claro' : 'Alternar para tema escuro'}>
+            <IconButton onClick={toggleTheme} color="inherit" sx={{ ml: 1 }}>
+              {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+            </IconButton>
+          </Tooltip>
         </Toolbar>
       </Container>
     </AppBar>
