@@ -196,140 +196,228 @@ const Home = () => {
       {/* Hero Section */}
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 8 }}>
         <Paper
-          elevation={3}
+            elevation={4}
           sx={{
-            p: 6,
+              p: { xs: 4, md: 6 },
             width: '100%',
             maxWidth: '1000px',
             background: 'linear-gradient(135deg, #1A1A1A 0%, #000000 100%)',
-            borderRadius: '16px',
+              borderRadius: '24px',
             position: 'relative',
             overflow: 'hidden',
-          }}
-        >
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              width: '200px',
-              height: '200px',
-              background: 'radial-gradient(circle, rgba(255,0,0,0.2) 0%, rgba(0,0,0,0) 70%)',
-              transform: 'translate(30%, -30%)',
+              border: '1px solid rgba(255, 0, 0, 0.1)',
             }}
-          />
-          <Box sx={{ position: 'relative', zIndex: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 4 }}>
-              <MusicNoteIcon sx={{ color: 'primary.main', fontSize: 60 }} />
-              <Typography
-                variant="h2"
-                component="h1"
-                sx={{
-                  background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  fontWeight: 700,
+          >
+            {/* Decorative elements */}
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                width: '300px',
+                height: '300px',
+                background: 'radial-gradient(circle, rgba(255,0,0,0.15) 0%, rgba(0,0,0,0) 70%)',
+                transform: 'translate(30%, -30%)',
+                pointerEvents: 'none',
+              }}
+            />
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                width: '200px',
+                height: '200px',
+                background: 'radial-gradient(circle, rgba(255,0,0,0.1) 0%, rgba(0,0,0,0) 70%)',
+                transform: 'translate(-30%, 30%)',
+                pointerEvents: 'none',
+              }}
+            />
+            <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, mb: 4, flexWrap: 'wrap' }}>
+                <Box sx={{ position: 'relative' }}>
+                  <MusicNoteIcon sx={{ color: 'primary.main', fontSize: { xs: 48, md: 72 } }} />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      inset: -8,
+                      borderRadius: '50%',
+                      background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
+                      opacity: 0.2,
+                      filter: 'blur(20px)',
+                      zIndex: -1,
+                    }}
+                  />
+                </Box>
+                <Typography
+                  variant="h2"
+                  component="h1"
+                  sx={{
+                    background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    fontWeight: 800,
+                    fontSize: { xs: '2.5rem', md: '3.5rem' },
+                    lineHeight: 1.2,
+                  }}
+                >
+                  PH Music
+                </Typography>
+              </Box>
+              <Typography 
+                variant="h5" 
+                color="text.secondary" 
+                sx={{ 
+                  mb: 4, 
+                  maxWidth: '700px', 
+                  mx: 'auto',
+                  fontWeight: 400,
+                  lineHeight: 1.6,
                 }}
               >
-                PH Music
+                Discover millions of tracks, create your perfect playlist, and enjoy music like never before.
               </Typography>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={() => navigate('/search')}
+                startIcon={<PlayArrowIcon />}
+                sx={{
+                  background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
+                  px: 5,
+                  py: 2,
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 20px rgba(255, 0, 0, 0.3)',
+                  '&:hover': {
+                    boxShadow: '0 6px 30px rgba(255, 0, 0, 0.4)',
+                    transform: 'translateY(-2px)',
+                  },
+                  transition: 'all 0.2s ease-in-out',
+                }}
+              >
+                Start Exploring
+              </Button>
             </Box>
-            <Typography variant="h5" color="text.secondary" sx={{ mb: 3, maxWidth: '600px' }}>
-              Discover millions of tracks, create your perfect playlist, and enjoy music like never before.
+          </Paper>
+        </Box>
+
+        {/* Featured Artists Section */}
+        <Box sx={{ mb: 8 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, px: 2 }}>
+            <Box sx={{ position: 'relative' }}>
+              <AlbumIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  inset: -8,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
+                  opacity: 0.15,
+                  filter: 'blur(16px)',
+                  zIndex: -1,
+                }}
+              />
+            </Box>
+            <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
+              Featured Artists
             </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={() => navigate('/search')}
-              startIcon={<PlayArrowIcon />}
-              sx={{
-                background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
-                px: 4,
-                py: 1.5,
-              }}
-            >
-              Start Exploring
-            </Button>
           </Box>
-        </Paper>
-      </Box>
-
-      {/* Featured Artists Section */}
-      <Box sx={{ mb: 8 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, px: 2 }}>
-          <AlbumIcon sx={{ color: 'primary.main', fontSize: 32 }} />
-          <Typography variant="h4" component="h2">
-            Featured Artists
-          </Typography>
+          <Grid container spacing={3}>
+            {featuredArtists.map((artist) => (
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={artist.id}>
+                <ArtistCard artist={artist} onClick={() => navigate(`/artist/${artist.id}`)} />
+              </Grid>
+            ))}
+          </Grid>
         </Box>
-        <Grid container spacing={3}>
-          {featuredArtists.map((artist) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={artist.id}>
-              <ArtistCard artist={artist} onClick={() => navigate(`/artist/${artist.id}`)} />
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
 
-      {/* Top Tracks Section */}
-      <Box sx={{ mb: 8 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, px: 2 }}>
-          <MusicNoteIcon sx={{ color: 'primary.main', fontSize: 32 }} />
-          <Typography variant="h4" component="h2">
-            Top Tracks
-          </Typography>
-        </Box>
-        <Grid container spacing={3}>
-          {topTracks.map((track) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={track.id}>
-              <TrackCard 
-                track={track}
-                isPlaying={currentlyPlaying === track.id}
-                onPlay={() => navigate(`/album/${track.album.id}`)}
-                onPreview={() => handlePreviewTrack(track)}
-                onYoutube={() => handleOpenYoutube(track)}
+        {/* Top Tracks Section */}
+        <Box sx={{ mb: 8 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, px: 2 }}>
+            <Box sx={{ position: 'relative' }}>
+              <MusicNoteIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  inset: -8,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
+                  opacity: 0.15,
+                  filter: 'blur(16px)',
+                  zIndex: -1,
+                }}
               />
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+            </Box>
+            <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
+              Top Tracks
+            </Typography>
+          </Box>
+          <Grid container spacing={3}>
+            {topTracks.map((track) => (
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={track.id}>
+                <TrackCard 
+                  track={track}
+                  isPlaying={currentlyPlaying === track.id}
+                  onPlay={() => navigate(`/album/${track.album.id}`)}
+                  onPreview={() => handlePreviewTrack(track)}
+                  onYoutube={() => handleOpenYoutube(track)}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
 
-      {/* Top Playlists Section */}
-      <Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, px: 2 }}>
-          <QueueMusicIcon sx={{ color: 'primary.main', fontSize: 32 }} />
-          <Typography variant="h4" component="h2">
-            Featured Playlists
+        {/* Top Playlists Section */}
+        <Box sx={{ mb: 8 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4, px: 2 }}>
+            <Box sx={{ position: 'relative' }}>
+              <QueueMusicIcon sx={{ color: 'primary.main', fontSize: 32 }} />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  inset: -8,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
+                  opacity: 0.15,
+                  filter: 'blur(16px)',
+                  zIndex: -1,
+                }}
+              />
+            </Box>
+            <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
+              Featured Playlists
+            </Typography>
+          </Box>
+          <Grid container spacing={3}>
+            {topPlaylists.map((playlist) => (
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={playlist.id}>
+                <PlaylistCard 
+                  playlist={playlist}
+                  onClick={() => navigate(`/playlist/${playlist.id}`)}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+
+        {/* Footer */}
+        <Box
+          sx={{
+            mt: 8,
+            py: 4,
+            textAlign: 'center',
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+        >
+          <Typography variant="body2" color="text.secondary">
+            Powered by Deezer API
           </Typography>
         </Box>
-        <Grid container spacing={3}>
-          {topPlaylists.map((playlist) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={playlist.id}>
-              <PlaylistCard 
-                playlist={playlist}
-                onClick={() => navigate(`/playlist/${playlist.id}`)}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
 
-      {/* Footer */}
-      <Box
-        sx={{
-          mt: 8,
-          py: 4,
-          textAlign: 'center',
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-        }}
-      >
-        <Typography variant="body2" color="text.secondary">
-          Powered by Deezer API
-        </Typography>
       </Box>
-
-    </Box>
-  );
+    );
 };
 
 export default Home; 

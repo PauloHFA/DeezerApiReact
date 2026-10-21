@@ -86,7 +86,7 @@ describe('CardComponents', () => {
       render(<ArtistCard artist={mockArtist} onClick={vi.fn()} />);
 
       expect(screen.getByText('Test Artist')).toBeInTheDocument();
-      expect(screen.getByText(/5[,.]000 fans/)).toBeInTheDocument();
+      expect(screen.getByText(/5[,.]000 fãs/)).toBeInTheDocument();
     });
 
     it('should call onClick when card is clicked', () => {
@@ -115,7 +115,7 @@ describe('CardComponents', () => {
       render(<PlaylistCard playlist={mockPlaylist} onClick={vi.fn()} />);
 
       expect(screen.getByText('Test Playlist')).toBeInTheDocument();
-      expect(screen.getByText('20 tracks')).toBeInTheDocument();
+      expect(screen.getByText('20 faixas')).toBeInTheDocument();
     });
   });
 });

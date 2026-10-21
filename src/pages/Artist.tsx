@@ -18,11 +18,13 @@ import {
   Tooltip,
   Button,
   Skeleton,
+  Paper,
 } from '@mui/material';
 import { getArtist, getArtistAlbums, getArtistTopTracks, getAlbumTracks } from '../services/deezerApi';
 import { fetchYoutubeVideoData } from '../services/youtubeApi';
 import { usePlayer } from '../hooks/usePlayer';
 import { useNotification } from '../hooks/useNotification';
+import { AlbumCard } from '../components/CardComponents';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -224,200 +226,268 @@ const Artist = () => {
         Voltar
       </Button>
 
-      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
-        <CardMedia
-          component="img"
-          sx={{ width: 200, height: 200, borderRadius: '50%' }}
-          image={artist.picture_xl}
-          alt={artist.name}
-        />
-        <Box sx={{ flex: 1, minWidth: 280 }}>
-          <Typography variant="h3" component="h1" gutterBottom>
-            {artist.name}
-          </Typography>
-          <Typography variant="h6" color="text.secondary">
-            {artist.nb_fan.toLocaleString()} fans
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Álbuns: {artist.nb_album ?? albums.length}
-          </Typography>
-          {artist.radio ? (
-            <Box sx={{ mt: 1 }}>
-              <Button
-                variant="outlined"
-                size="small"
-                color="primary"
-                onClick={() => window.open(`https://www.deezer.com/artist/${artist.id}/radio`, '_blank')}
-                sx={{ mt: 1 }}
-              >
-                🎙️ Ouvir Rádio
-              </Button>
-            </Box>
-          ) : (
-            <Typography variant="body1" color="text.secondary">
-              Rádio: Indisponível
-            </Typography>
-          )}
-          {artist.genres?.length ? (
-            <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-              Gênero{artist.genres.length > 1 ? 's' : ''}: {artist.genres.map((genre) => genre.name).join(', ')}
-            </Typography>
-          ) : artist.genre_id ? (
-            <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-              Gênero ID: {artist.genre_id}
-            </Typography>
-          ) : null}
-          {(artist.description || artist.biography) && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 2, maxWidth: '720px', whiteSpace: 'pre-line' }}>
-              {artist.description ?? artist.biography}
-            </Typography>
-          )}
-        </Box>
-      </Box>
-
-      {topTracks.length > 0 && (
-        <Box sx={{ mb: 6 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-            <MusicNoteIcon sx={{ color: 'primary.main' }} />
-            <Typography variant="h4" component="h2">
-              Top Tracks
-            </Typography>
-          </Box>
-          <List>
-            {topTracks.map((track, index) => (
-              <ListItem
-                key={track.id}
+        {/* Artist Header */}
+        <Paper
+          elevation={3}
+          sx={{
+            p: { xs: 3, md: 4 },
+            mb: 4,
+            background: 'linear-gradient(135deg, #1A1A1A 0%, #000000 100%)',
+            borderRadius: '24px',
+            border: '1px solid rgba(255, 0, 0, 0.1)',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '300px',
+              height: '300px',
+              background: 'radial-gradient(circle, rgba(255,0,0,0.15) 0%, rgba(0,0,0,0) 70%)',
+              transform: 'translate(30%, -30%)',
+              pointerEvents: 'none',
+            }}
+          />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
+            <Box sx={{ position: 'relative', flexShrink: 0 }}>
+              <CardMedia
+                component="img"
+                sx={{ width: { xs: 150, md: 200 }, height: { xs: 150, md: 200 }, borderRadius: '50%' }}
+                image={artist.picture_xl}
+                alt={artist.name}
+              />
+              <Box
                 sx={{
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 0, 0, 0.1)',
-                  },
+                  position: 'absolute',
+                  inset: -8,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
+                  opacity: 0.2,
+                  filter: 'blur(20px)',
+                  zIndex: -1,
                 }}
-              >
-                <ListItemIcon>
-                  <Typography variant="body2" color="text.secondary">
-                    {index + 1}
-                  </Typography>
-                </ListItemIcon>
-                <ListItemText
-                  primary={track.title}
-                  secondary={formatDuration(track.duration)}
-                />
-                <Tooltip title="Preview">
-                  <IconButton
-                    size="small"
-                    onClick={() => handlePreviewTrack(track)}
-                    sx={{
-                      color: currentlyPlaying === track.id ? 'primary.main' : 'inherit',
-                    }}
-                  >
-                    <PreviewIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="YouTube">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleOpenYoutube(track)}
-                    color="error"
-                  >
-                    <YouTubeIcon />
-                  </IconButton>
-                </Tooltip>
-              </ListItem>
-            ))}
-          </List>
-        </Box>
-      )}
+              />
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 280 }}>
+              <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 800 }}>
+                {artist.name}
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+                <Typography variant="h6" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <MusicNoteIcon fontSize="small" /> {artist.nb_fan.toLocaleString()} fãs
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <AlbumIcon fontSize="small" /> Álbuns: {artist.nb_album ?? albums.length}
+                </Typography>
+              </Box>
+              {artist.radio ? (
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="primary"
+                  onClick={() => window.open(`https://www.deezer.com/artist/${artist.id}/radio`, '_blank')}
+                  sx={{ mt: 1 }}
+                  startIcon={<MusicNoteIcon />}
+                >
+                  Ouvir Rádio
+                </Button>
+              ) : (
+                <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+                  Rádio: Indisponível
+                </Typography>
+              )}
+              {artist.genres?.length ? (
+                <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+                  Gênero{artist.genres.length > 1 ? 's' : ''}: {artist.genres.map((genre) => genre.name).join(', ')}
+                </Typography>
+              ) : artist.genre_id ? (
+                <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+                  Gênero ID: {artist.genre_id}
+                </Typography>
+              ) : null}
+              {(artist.description || artist.biography) && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2, maxWidth: '720px', whiteSpace: 'pre-line' }}>
+                  {artist.description ?? artist.biography}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        </Paper>
 
-      <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-        Albums
-      </Typography>
-      <Grid container spacing={3}>
-        {albums.map((album) => (
-          <Grid size={{ xs: 12 }} key={album.id}>
-            <Card
-              sx={{
-                background: 'linear-gradient(to right, #1A1A1A, #000000)',
-                transition: 'transform 0.2s ease-in-out',
-                '&:hover': {
-                  transform: 'scale(1.01)',
-                },
-              }}
-            >
-              <CardContent>
+        {/* Top Tracks Section */}
+        {topTracks.length > 0 && (
+          <Box sx={{ mb: 6 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+              <Box sx={{ position: 'relative' }}>
+                <MusicNoteIcon sx={{ color: 'primary.main', fontSize: 28 }} />
                 <Box
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    cursor: 'pointer',
+                    position: 'absolute',
+                    inset: -6,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
+                    opacity: 0.15,
+                    filter: 'blur(12px)',
+                    zIndex: -1,
                   }}
-                  onClick={() => handleAlbumClick(album.id)}
+                />
+              </Box>
+              <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
+                Top Tracks
+              </Typography>
+            </Box>
+            <List>
+              {topTracks.map((track, index) => (
+                <ListItem
+                  key={track.id}
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                    },
+                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                  }}
                 >
-                  <CardMedia
-                    component="img"
-                    sx={{ width: 100, height: 100, borderRadius: '8px' }}
-                    image={album.cover_medium}
-                    alt={album.title}
+                  <ListItemIcon>
+                    <Typography variant="body2" color="text.secondary" sx={{ minWidth: 30, textAlign: 'center' }}>
+                      {index + 1}
+                    </Typography>
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={track.title}
+                    secondary={formatDuration(track.duration)}
                   />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="h6" component="div">
-                      {album.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {new Date(album.release_date).getFullYear()} • {albumTracks[album.id]?.length || '...'} tracks
-                    </Typography>
-                  </Box>
-                  <IconButton>
-                    {expandedAlbum === album.id ? <PauseIcon /> : <PlayArrowIcon />}
-                  </IconButton>
-                </Box>
+                  <Tooltip title="Preview">
+                    <IconButton
+                      size="small"
+                      onClick={() => handlePreviewTrack(track)}
+                      sx={{
+                        color: currentlyPlaying === track.id ? 'primary.main' : 'inherit',
+                      }}
+                    >
+                      <PreviewIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="YouTube">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleOpenYoutube(track)}
+                      color="error"
+                    >
+                      <YouTubeIcon />
+                    </IconButton>
+                  </Tooltip>
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        )}
 
-                <Collapse in={expandedAlbum === album.id}>
-                  <Divider sx={{ my: 2 }} />
-                  <List>
-                    {albumTracks[album.id]?.map((track, index) => (
-                      <ListItem
-                        key={track.id}
-                        sx={{
-                          '&:hover': {
-                            backgroundColor: 'rgba(255, 0, 0, 0.1)',
-                          },
-                        }}
-                      >
-                        <ListItemIcon>
-                          <Typography variant="body2" color="text.secondary">
-                            {index + 1}
-                          </Typography>
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={track.title}
-                          secondary={formatDuration(track.duration)}
-                        />
-                        <Tooltip title="Preview">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePreviewTrack(track);
-                            }}
-                            sx={{
-                              color: currentlyPlaying === track.id ? 'primary.main' : 'inherit',
-                            }}
-                          >
-                            <PreviewIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </ListItem>
-                    ))}
-                  </List>
-                </Collapse>
-              </CardContent>
-            </Card>
+        {/* Albums Section */}
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+            <Box sx={{ position: 'relative' }}>
+              <AlbumIcon sx={{ color: 'primary.main', fontSize: 28 }} />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  inset: -6,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
+                  opacity: 0.15,
+                  filter: 'blur(12px)',
+                  zIndex: -1,
+                }}
+              />
+            </Box>
+            <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
+              Álbuns
+            </Typography>
+          </Box>
+          <Grid container spacing={3}>
+            {albums.map((album) => (
+              <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={album.id}>
+                <AlbumCard album={album} onClick={() => handleAlbumClick(album.id)} />
+              </Grid>
+            ))}
           </Grid>
-        ))}
-      </Grid>
-    </Box>
-  );
+        </Box>
+
+        {/* Album Tracks Expansion */}
+        {expandedAlbum && albumTracks[expandedAlbum]?.length > 0 && (
+          <Paper
+            elevation={2}
+            sx={{
+              p: 3,
+              mb: 4,
+              background: 'linear-gradient(to right, #1A1A1A, #000000)',
+              borderRadius: '16px',
+              border: '1px solid rgba(255, 0, 0, 0.1)',
+            }}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" component="h2">
+                Faixas de {albums.find(a => a.id === expandedAlbum)?.title}
+              </Typography>
+              <IconButton onClick={() => setExpandedAlbum(null)}>
+                <PauseIcon />
+              </IconButton>
+            </Box>
+            <List>
+              {albumTracks[expandedAlbum]?.map((track, index) => (
+                <ListItem
+                  key={track.id}
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                    },
+                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                  }}
+                >
+                  <ListItemIcon>
+                    <Typography variant="body2" color="text.secondary" sx={{ minWidth: 30, textAlign: 'center' }}>
+                      {index + 1}
+                    </Typography>
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={track.title}
+                    secondary={formatDuration(track.duration)}
+                  />
+                  <Tooltip title="Preview">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePreviewTrack(track);
+                      }}
+                      sx={{
+                        color: currentlyPlaying === track.id ? 'primary.main' : 'inherit',
+                      }}
+                    >
+                      <PreviewIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="YouTube">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenYoutube(track);
+                      }}
+                      color="error"
+                    >
+                      <YouTubeIcon />
+                    </IconButton>
+                  </Tooltip>
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
+        )}
+      </Box>
+    );
 };
 
 export default Artist; 

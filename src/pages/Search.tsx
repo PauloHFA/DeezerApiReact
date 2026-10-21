@@ -207,77 +207,148 @@ const Search = () => {
           <Box sx={{ width: '100%', maxWidth: '1200px' }}>
             <Box sx={{ mb: 6 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
-                <PersonIcon sx={{ color: 'primary.main' }} />
-                <Typography variant="h4" component="h2">
-                  Artistas
-                </Typography>
-              </Box>
-              <Grid container spacing={3} justifyContent="center">
-                <SkeletonGrid count={4} xs={12} sm={6} md={4} lg={3} />
-              </Grid>
-            </Box>
-            <Box sx={{ mb: 6 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
-                <MusicNoteIcon sx={{ color: 'primary.main' }} />
-                <Typography variant="h4" component="h2">
-                  Tracks
-                </Typography>
-              </Box>
-              <SkeletonTrackList count={5} />
-            </Box>
-          </Box>
-        ) : searchQuery.trim() ? (
-          <Box sx={{ width: '100%', maxWidth: '1200px' }}>
-            {results?.artists.length > 0 && (
-              <Box sx={{ mb: 6 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
-                  <PersonIcon sx={{ color: 'primary.main' }} />
-                  <Typography variant="h4" component="h2">
-                    Artists
-                  </Typography>
-                </Box>
-                <Grid container spacing={3} justifyContent="center">
-                  {results.artists.map((artist) => (
-                    <ArtistCard key={artist.id} artist={artist} onClick={() => navigate(`/artist/${artist.id}`)} />
-                  ))}
-                </Grid>
-              </Box>
-            )}
+                        <Box sx={{ position: 'relative' }}>
+                          <PersonIcon sx={{ color: 'primary.main', fontSize: 28 }} />
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              inset: -6,
+                              borderRadius: '50%',
+                              background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
+                              opacity: 0.15,
+                              filter: 'blur(12px)',
+                              zIndex: -1,
+                            }}
+                          />
+                        </Box>
+                        <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
+                          Artistas
+                        </Typography>
+                      </Box>
+                      <Grid container spacing={3} justifyContent="center">
+                        <SkeletonGrid count={4} xs={12} sm={6} md={4} lg={3} />
+                      </Grid>
+                    </Box>
+                    <Box sx={{ mb: 6 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
+                        <Box sx={{ position: 'relative' }}>
+                          <MusicNoteIcon sx={{ color: 'primary.main', fontSize: 28 }} />
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              inset: -6,
+                              borderRadius: '50%',
+                              background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
+                              opacity: 0.15,
+                              filter: 'blur(12px)',
+                              zIndex: -1,
+                            }}
+                          />
+                        </Box>
+                        <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
+                          Tracks
+                        </Typography>
+                      </Box>
+                      <SkeletonTrackList count={5} />
+                    </Box>
+                  </Box>
+                ) : searchQuery.trim() ? (
+                  <Box sx={{ width: '100%', maxWidth: '1200px' }}>
+                    {results?.artists.length > 0 && (
+                      <Box sx={{ mb: 6 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
+                          <Box sx={{ position: 'relative' }}>
+                            <PersonIcon sx={{ color: 'primary.main', fontSize: 28 }} />
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                inset: -6,
+                                borderRadius: '50%',
+                                background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
+                                opacity: 0.15,
+                                filter: 'blur(12px)',
+                                zIndex: -1,
+                              }}
+                            />
+                          </Box>
+                          <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
+                            Artists
+                          </Typography>
+                        </Box>
+                        <Grid container spacing={3} justifyContent="center">
+                          {results.artists.map((artist) => (
+                            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={artist.id}>
+                              <ArtistCard artist={artist} onClick={() => navigate(`/artist/${artist.id}`)} />
+                            </Grid>
+                          ))}
+                        </Grid>
+                      </Box>
+                    )}
 
-            {results?.albums.length > 0 && (
-              <Box sx={{ mb: 6 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
-                  <AlbumIcon sx={{ color: 'primary.main' }} />
-                  <Typography variant="h4" component="h2">
-                    Albums
-                  </Typography>
-                </Box>
-                <Grid container spacing={3} justifyContent="center">
-                  {results.albums.map((album) => (
-                    <AlbumCard key={album.id} album={album} />
-                  ))}
-                </Grid>
-              </Box>
-            )}
+                    {results?.albums.length > 0 && (
+                      <Box sx={{ mb: 6 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
+                          <Box sx={{ position: 'relative' }}>
+                            <AlbumIcon sx={{ color: 'primary.main', fontSize: 28 }} />
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                inset: -6,
+                                borderRadius: '50%',
+                                background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
+                                opacity: 0.15,
+                                filter: 'blur(12px)',
+                                zIndex: -1,
+                              }}
+                            />
+                          </Box>
+                          <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
+                            Albums
+                          </Typography>
+                        </Box>
+                        <Grid container spacing={3} justifyContent="center">
+                          {results.albums.map((album) => (
+                            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={album.id}>
+                              <AlbumCard album={album} />
+                            </Grid>
+                          ))}
+                        </Grid>
+                      </Box>
+                    )}
 
-            {results?.playlists.length > 0 && (
-              <Box sx={{ mb: 6 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
-                  <QueueMusicIcon sx={{ color: 'primary.main' }} />
-                  <Typography variant="h4" component="h2">
-                    Playlists
-                  </Typography>
-                </Box>
-                <Grid container spacing={3} justifyContent="center">
-                  {results.playlists.map((playlist) => (
-                    <PlaylistCard key={playlist.id} playlist={playlist} />
-                  ))}
-                </Grid>
-              </Box>
-            )}
+                    {results?.playlists.length > 0 && (
+                      <Box sx={{ mb: 6 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
+                          <Box sx={{ position: 'relative' }}>
+                            <QueueMusicIcon sx={{ color: 'primary.main', fontSize: 28 }} />
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                inset: -6,
+                                borderRadius: '50%',
+                                background: 'linear-gradient(45deg, #FF0000 30%, #FF3333 90%)',
+                                opacity: 0.15,
+                                filter: 'blur(12px)',
+                                zIndex: -1,
+                              }}
+                            />
+                          </Box>
+                          <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
+                            Playlists
+                          </Typography>
+                        </Box>
+                        <Grid container spacing={3} justifyContent="center">
+                          {results.playlists.map((playlist) => (
+                            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={playlist.id}>
+                              <PlaylistCard playlist={playlist} />
+                            </Grid>
+                          ))}
+                        </Grid>
+                      </Box>
+                    )}
 
-            {results?.tracks.length > 0 && (
-              <Box>
+                    {results?.tracks.length > 0 && (
+                      <Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
                   <MusicNoteIcon sx={{ color: 'primary.main' }} />
                   <Typography variant="h4" component="h2">
