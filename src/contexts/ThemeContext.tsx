@@ -42,6 +42,32 @@ const defaultThemeOptions: ThemeOptions = {
     h6: { fontWeight: 500, fontSize: '1rem' },
   },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        'html, body, #root': { minWidth: 0, width: '100%' },
+        body: { margin: 0 },
+        'img, video': { maxWidth: '100%' },
+        'main .MuiTypography-root': { overflowWrap: 'anywhere' },
+        '@media (max-width: 599.95px)': {
+          'main .MuiListItem-root': { flexWrap: 'wrap' },
+          'main .MuiListItemText-root': { minWidth: 0, flexBasis: 'calc(100% - 56px)' },
+          'main .MuiListItem-root:has(.MuiListItemSecondaryAction-root)': {
+            display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '4px', padding: '12px 0',
+          },
+          'main .MuiListItemSecondaryAction-root': {
+            position: 'static', transform: 'none', gridColumn: '1 / -1', justifySelf: 'end', maxWidth: '100%',
+          },
+          'main .MuiListItemSecondaryAction-root > *': { flexWrap: 'wrap' },
+          'main .MuiIconButton-root': { minWidth: 44, minHeight: 44 },
+          'main .MuiListItemIcon-root, main .MuiListItemAvatar-root': { minWidth: 40 },
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: { '@media (max-width: 599.95px)': { margin: '16px', width: 'calc(100% - 32px)', maxHeight: 'calc(100dvh - 32px)' } },
+      },
+    },
     MuiCard: {
       styleOverrides: {
         root: {

@@ -204,7 +204,7 @@ const Library = () => {
           Todas as listas
         </Button>
         <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} sx={{ mb: 1 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between" gap={2} sx={{ mb: 1 }}>
             <Box>
               <Typography variant="h4" component="h1" fontWeight={700}>
                 {selectedList.name}
@@ -368,7 +368,7 @@ const Library = () => {
         Feitas para você
       </Typography>
       {library.playHistory.length === 0 && library.searchHistory.length === 0 ? (
-        <Paper sx={{ p: 3, mb: 4, borderRadius: 3 }}>
+        <Paper sx={{ p: { xs: 2, sm: 3 }, mb: 4, borderRadius: 3 }}>
           <Typography color="text.secondary">
             Suas listas inteligentes aparecem aqui depois que você buscar ou reproduzir algumas faixas.
           </Typography>
@@ -430,7 +430,7 @@ const Library = () => {
           ))}
         </Grid>
       ) : (
-        <Paper sx={{ p: 3, borderRadius: 3 }}>
+        <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
           <Typography color="text.secondary">
             Você ainda não criou uma playlist. Crie uma e adicione faixas pelos resultados da busca.
           </Typography>

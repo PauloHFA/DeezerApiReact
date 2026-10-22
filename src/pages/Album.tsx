@@ -96,7 +96,7 @@ const Album = () => {
 
   if (loading) {
     return (
-        <Box sx={{ py: 4, width: '100%', maxWidth: '1200px', mx: 'auto' }}>
+        <Box sx={{ py: { xs: 2, sm: 4 }, px: { xs: 2, sm: 3 }, width: '100%', maxWidth: '1200px', mx: 'auto' }}>
           <Button
             startIcon={<ArrowBackIosNewIcon />}
             onClick={() => navigate(-1)}
@@ -108,7 +108,7 @@ const Album = () => {
           {/* Album Header Skeleton */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 4, flexWrap: 'wrap' }}>
             <Skeleton variant="rectangular" width={280} height={280} sx={{ borderRadius: '16px' }} />
-            <Box sx={{ flex: 1, minWidth: 280 }}>
+            <Box sx={{ flex: 1, minWidth: { xs: 0, sm: 280 }, width: { xs: '100%', sm: 'auto' } }}>
               <Skeleton variant="text" height={48} width="60%" sx={{ mb: 1 }} />
               <Skeleton variant="text" height={24} width="40%" sx={{ mb: 1 }} />
               <Skeleton variant="text" height={20} width="50%" sx={{ mb: 2 }} />
@@ -163,7 +163,7 @@ const Album = () => {
   }
 
   return (
-    <Box sx={{ py: 4, width: '100%', maxWidth: '1200px', mx: 'auto' }}>
+    <Box sx={{ py: { xs: 2, sm: 4 }, px: { xs: 2, sm: 3 }, width: '100%', maxWidth: '1200px', mx: 'auto' }}>
       <Button
         startIcon={<ArrowBackIosNewIcon />}
         onClick={() => navigate(-1)}
@@ -176,7 +176,7 @@ const Album = () => {
         <Paper
           elevation={3}
           sx={{
-            p: { xs: 3, md: 4 },
+            p: { xs: 2, sm: 3, md: 4 },
             mb: 4,
             background: 'linear-gradient(135deg, #1A1A1A 0%, #000000 100%)',
             borderRadius: '24px',
@@ -197,7 +197,7 @@ const Album = () => {
               pointerEvents: 'none',
             }}
           />
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 4, flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 2, md: 4 }, flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
             <Box sx={{ position: 'relative', flexShrink: 0 }}>
               <CardMedia
                 component="img"
@@ -217,7 +217,7 @@ const Album = () => {
                 }}
               />
             </Box>
-            <Box sx={{ flex: 1, minWidth: 280 }}>
+            <Box sx={{ flex: 1, minWidth: { xs: 0, sm: 280 }, width: { xs: '100%', sm: 'auto' } }}>
               <Typography variant="h3" gutterBottom sx={{ fontWeight: 800 }}>
                 {album.title}
               </Typography>
@@ -239,7 +239,7 @@ const Album = () => {
                   </Typography>
                 </Box>
               )}
-              <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+              <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                 <Button
                   variant="outlined"
                   color="primary"
@@ -256,7 +256,7 @@ const Album = () => {
         {/* Tracks Section */}
         <Paper
           elevation={0}
-          sx={{ p: 3, background: 'rgba(255,255,255,0.04)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}
+          sx={{ p: { xs: 2, sm: 3 }, background: 'rgba(255,255,255,0.04)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <Box sx={{ position: 'relative' }}>

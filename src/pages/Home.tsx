@@ -116,7 +116,7 @@ const Home = () => {
             <Paper
               elevation={3}
               sx={{
-                p: 6,
+                p: { xs: 2, sm: 4, md: 6 },
                 width: '100%',
                 maxWidth: '1000px',
                 background: 'linear-gradient(135deg, #1A1A1A 0%, #000000 100%)',

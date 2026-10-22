@@ -61,10 +61,27 @@ const Player = () => {
   } = usePlayer();
 
   const audioRef = useRef<HTMLAudioElement>(null);
+  const playerPanelRef = useRef<HTMLDivElement>(null);
   const youtubeContainerRef = useRef<HTMLDivElement>(null);
   const [showProgress, setShowProgress] = useState(false);
   const [progress, setProgress] = useState({ current: 0, duration: 0 });
   const progressIntervalRef = useRef<number | null>(null);
+
+  const hasCurrentTrack = Boolean(currentTrack);
+  useEffect(() => {
+    const panel = playerPanelRef.current;
+    if (!panel) return;
+    const updateHeight = () => document.documentElement.style.setProperty('--music-player-height', `${panel.getBoundingClientRect().height}px`);
+    updateHeight();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateHeight);
+    observer?.observe(panel);
+    window.addEventListener('resize', updateHeight);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', updateHeight);
+      document.documentElement.style.removeProperty('--music-player-height');
+    };
+  }, [hasCurrentTrack]);
 
   // Audio element for Deezer previews
   useEffect(() => {
@@ -193,13 +210,19 @@ const Player = () => {
 
   return (
     <Paper
+      ref={playerPanelRef}
+      component="section"
+      aria-label="Player de música"
       elevation={3}
       sx={{
         position: 'fixed',
         bottom: 0,
         left: 0,
         right: 0,
-        p: 2,
+        p: { xs: 1, sm: 2 },
+        pb: 'max(8px, env(safe-area-inset-bottom))',
+        maxHeight: '85dvh',
+        overflowY: 'auto',
         background: 'linear-gradient(to right, #1A1A1A, #000000)',
         borderRadius: '16px 16px 0 0',
         zIndex: 1000,
@@ -207,9 +230,9 @@ const Player = () => {
       }}
     >
       {/* Main player bar */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'grid', alignItems: 'center', gap: { xs: 1, sm: 2 }, gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', md: 'minmax(0, 1fr) minmax(160px, 1fr) auto', lg: 'minmax(0, 1fr) minmax(160px, 1fr) auto 120px auto' }, gridTemplateAreas: { xs: '"info controls" "progress progress" "volume sources"', md: '"info progress controls" "volume volume sources"', lg: '"info progress controls volume sources"' } }}>
         {/* Track info */}
-        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+        <Box sx={{ gridArea: 'info', display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, minWidth: 0 }}>
           <img
             src={currentTrack.album?.cover_small || currentTrack.album?.cover_medium}
             alt={currentTrack.title}
@@ -239,9 +262,10 @@ const Player = () => {
         {/* Progress bar (click to expand) */}
         <Box 
           sx={{ 
-            flex: 1, 
+            gridArea: 'progress',
             maxWidth: 600, 
-            minWidth: 200,
+            minWidth: 0,
+            width: '100%',
             display: 'flex', 
             flexDirection: 'column', 
             alignItems: 'center',
@@ -278,14 +302,14 @@ const Player = () => {
         </Box>
 
         {/* Controls */}
-        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ px: 1 }}>
+        <Stack direction="row" spacing={{ xs: 0, sm: 1.5 }} alignItems="center" sx={{ gridArea: 'controls', '& .MuiIconButton-root': { minWidth: 44, minHeight: 44 } }}>
           <Tooltip title="Anterior">
             <IconButton onClick={() => { /* previous track */ }} color="primary" disabled={queue.length === 0}>
               <FastRewind />
             </IconButton>
           </Tooltip>
           <Tooltip title={isPlaying ? 'Pausar' : 'Reproduzir'}>
-            <IconButton onClick={handlePlayPause} color="primary" size="large" sx={{ p: 1 }}>
+            <IconButton aria-label={isPlaying ? 'Pausar' : 'Reproduzir'} onClick={handlePlayPause} color="primary" size="large" sx={{ p: 1 }}>
               {isPlaying ? <Pause fontSize="large" /> : <PlayArrow fontSize="large" />}
             </IconButton>
           </Tooltip>
@@ -297,8 +321,9 @@ const Player = () => {
         </Stack>
 
         {/* Volume */}
-        <Box sx={{ width: 120, display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ gridArea: 'volume', width: '100%', maxWidth: 140, minWidth: 0, display: 'flex', alignItems: 'center', gap: 1 }}>
           <IconButton 
+            aria-label={volume > 0 ? 'Silenciar' : 'Ativar som'}
             onClick={() => setPlayerVolume(volume > 0 ? 0 : 0.5)} 
             color="primary"
             size="small"
@@ -306,6 +331,7 @@ const Player = () => {
             {volume > 0 ? <VolumeUp /> : <VolumeOff />}
           </IconButton>
           <Slider
+            aria-label="Volume"
             size="small"
             value={volume}
             onChange={handleVolumeChange}
@@ -317,7 +343,7 @@ const Player = () => {
         </Box>
 
         {/* Source selector */}
-        <Box sx={{ display: 'flex', gap: 0.5, px: 1 }}>
+        <Box sx={{ gridArea: 'sources', display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 0.5, '& .MuiButton-root': { minHeight: 44 } }}>
           <Tooltip title="Deezer Preview (30s)">
             <Button
               size="small"

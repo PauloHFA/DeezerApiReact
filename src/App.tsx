@@ -37,7 +37,7 @@ function App() {
                   <AccountProvider>
                     <PlayerProvider>
                       <Navbar />
-                      <Container maxWidth={false} disableGutters>
+                      <Container component="main" maxWidth={false} disableGutters sx={{ minWidth: 0, pb: 'calc(var(--music-player-height, 0px) + 24px)' }}>
                         <Suspense fallback={
                           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
                             <CircularProgress size={60} sx={{ color: 'primary.main' }} />

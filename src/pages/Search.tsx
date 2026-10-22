@@ -171,7 +171,7 @@ const Search = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 4,
+            p: { xs: 2, sm: 4 },
             mb: 6,
             width: '100%',
             maxWidth: '800px',

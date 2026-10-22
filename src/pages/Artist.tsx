@@ -104,9 +104,9 @@ const Artist = () => {
           </Button>
         
           {/* Artist Header Skeleton */}
-          <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+          <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: { xs: 2, md: 4 }, flexWrap: 'wrap' }}>
             <Skeleton variant="circular" width={200} height={200} />
-            <Box sx={{ flex: 1, minWidth: 280 }}>
+            <Box sx={{ flex: 1, minWidth: { xs: 0, sm: 280 }, width: { xs: '100%', sm: 'auto' } }}>
               <Skeleton variant="text" height={48} width="60%" sx={{ mb: 1 }} />
               <Skeleton variant="text" height={24} width="40%" sx={{ mb: 1 }} />
               <Skeleton variant="text" height={20} width="30%" sx={{ mb: 2 }} />
@@ -209,7 +209,7 @@ const Artist = () => {
         <Paper
           elevation={3}
           sx={{
-            p: { xs: 3, md: 4 },
+            p: { xs: 2, sm: 3, md: 4 },
             mb: 4,
             background: 'linear-gradient(135deg, #1A1A1A 0%, #000000 100%)',
             borderRadius: '24px',
@@ -230,7 +230,7 @@ const Artist = () => {
               pointerEvents: 'none',
             }}
           />
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, md: 4 }, flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
             <Box sx={{ position: 'relative', flexShrink: 0 }}>
               <CardMedia
                 component="img"
@@ -250,7 +250,7 @@ const Artist = () => {
                 }}
               />
             </Box>
-            <Box sx={{ flex: 1, minWidth: 280 }}>
+            <Box sx={{ flex: 1, minWidth: { xs: 0, sm: 280 }, width: { xs: '100%', sm: 'auto' } }}>
               <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 800 }}>
                 {artist.name}
               </Typography>

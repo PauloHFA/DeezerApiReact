@@ -8,7 +8,7 @@ const NotificationContainer = () => {
   const { notifications, removeNotification } = useNotification();
 
   return (
-    <Box sx={{ position: 'fixed', top: 24, right: 24, zIndex: 2000 }}>
+    <Box sx={{ position: 'fixed', top: { xs: 8, sm: 24 }, right: { xs: 8, sm: 24 }, left: { xs: 8, sm: 'auto' }, zIndex: 2000 }}>
       {notifications.map((notification) => (
         <Snackbar
           key={notification.id}
@@ -23,7 +23,9 @@ const NotificationContainer = () => {
             variant="filled"
             sx={{
               width: '100%',
-              minWidth: '300px',
+              minWidth: { xs: 0, sm: '300px' },
+              maxWidth: 'calc(100vw - 16px)',
+              overflowWrap: 'anywhere',
               boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
               animation: 'slideIn 0.3s ease-in-out',
               '@keyframes slideIn': {
