@@ -1,12 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { fetchYoutubeVideoData } from '@/services/youtubeApi';
 import { trackMatchingService, TrackMatchingService } from '@/services/trackMatching';
 import type { Track } from '@/types';
+
+vi.mock('@/services/youtubeApi', () => ({
+  fetchYoutubeVideoData: vi.fn().mockResolvedValue(null),
+}));
 
 describe('trackMatching Service', () => {
   let service: TrackMatchingService;
 
   beforeEach(() => {
     service = new TrackMatchingService();
+    vi.mocked(fetchYoutubeVideoData).mockResolvedValue(null);
   });
 
   describe('stringSimilarity (private method tested via matchTrack)', () => {
@@ -38,11 +44,6 @@ describe('trackMatching Service', () => {
         artist: { name: 'Test Artist' }, 
         duration: 200 
       };
-      
-      // Mock fetchYoutubeVideoData to return null
-      vi.doMock('@/services/youtubeApi', () => ({
-        fetchYoutubeVideoData: vi.fn().mockResolvedValue(null)
-      }));
       
       const result = await service.matchYouTube(track);
       expect(result.videoId).toBeNull();

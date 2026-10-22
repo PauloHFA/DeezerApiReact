@@ -336,7 +336,7 @@ describe('PlayerContext', () => {
   });
 
   describe('playYoutube', () => {
-    it('should set YouTube video and start playing', async () => {
+    it('should select a YouTube video without assuming playback started', async () => {
       const track = createMockTrack();
       
       const { result } = renderHook(() => usePlayer(), {
@@ -348,7 +348,7 @@ describe('PlayerContext', () => {
       });
 
       expect(screen.getByTestId('current-track').textContent).toBe('Test Song');
-      expect(screen.getByTestId('is-playing').textContent).toBe('true');
+      expect(screen.getByTestId('is-playing').textContent).toBe('false');
       expect(screen.getByTestId('playback-source').textContent).toBe('youtube');
       expect(screen.getByTestId('youtube-video-id').textContent).toBe('yt123');
       expect(screen.getByTestId('currently-playing').textContent).toBe('1');
@@ -685,7 +685,6 @@ describe('PlayerContext', () => {
             expect(screen.getByTestId('currently-playing').textContent).toBe('42');
           });
         });
-
 
 
 

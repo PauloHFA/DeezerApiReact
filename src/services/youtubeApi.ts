@@ -15,9 +15,15 @@ export const fetchYoutubeVideoData = async (
     return null;
   }
 
-  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${encodeURIComponent(
-    query
-  )}&key=${YOUTUBE_API_KEY}`;
+  const params = new URLSearchParams({
+    part: 'snippet',
+    type: 'video',
+    videoEmbeddable: 'true',
+    maxResults: '1',
+    q: query,
+    key: YOUTUBE_API_KEY,
+  });
+  const url = `https://www.googleapis.com/youtube/v3/search?${params.toString()}`;
 
   const response = await fetch(url);
   if (!response.ok) {

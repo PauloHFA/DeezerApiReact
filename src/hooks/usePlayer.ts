@@ -22,6 +22,7 @@ export const usePlayer = () => {
     youtubePlayerState: number;
     youtubeDuration: number;
     youtubeCurrentTime: number;
+    youtubeError: number | null;
     spotifyDeviceId: string | null;
     spotifyPlaybackState: any | null;
     matchedTrack: any | null;
@@ -39,6 +40,7 @@ export const usePlayer = () => {
     playPreview: (trackOrUrl: any) => void;
     stopPreview: () => void;
     playYoutube: (track: any, videoId: string, thumbnailUrl?: string) => void;
+    initializeYoutubePlayer: (element: HTMLDivElement, videoId: string) => Promise<void>;
     stopYoutube: () => void;
     playSpotify: (track: any, spotifyTrack: any) => Promise<void>;
     stopSpotify: () => void;

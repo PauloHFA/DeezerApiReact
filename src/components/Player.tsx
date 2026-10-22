@@ -7,6 +7,8 @@ import {
   Paper,
   Stack,
   Chip,
+  Alert,
+  Link,
   LinearProgress,
   Tooltip,
   Button,
@@ -24,7 +26,6 @@ import {
   MusicNote,
 } from '@mui/icons-material';
 import { usePlayer, PlaybackSource } from '../hooks/usePlayer';
-import { YouTubePlayerState } from '../services/youtubePlayer';
 
 const Player = () => {
   const {
@@ -34,14 +35,16 @@ const Player = () => {
     queue,
     previewUrl,
     youtubeVideoId,
-    youtubeThumbnail,
+      youtubeThumbnail,
     youtubePlayerState,
     youtubeDuration,
     youtubeCurrentTime,
+    youtubeError,
     playbackSource,
     spotifyDeviceId,
     spotifyPlaybackState,
     matchedTrack,
+    initializeYoutubePlayer,
     pauseTrack,
     resumeTrack,
     setPlayerVolume,
@@ -126,12 +129,15 @@ const Player = () => {
     };
   }, [playbackSource, previewUrl, isPlaying, youtubeCurrentTime, youtubeDuration, spotifyPlaybackState]);
 
-  // Initialize YouTube player when videoId changes
+  // The iframe must exist before the YouTube API can attach to it.
   useEffect(() => {
-    if (youtubeVideoId && youtubeContainerRef.current) {
-      // The player creation is handled in playYoutube callback
-    }
-  }, [youtubeVideoId]);
+    const container = youtubeContainerRef.current;
+    if (!youtubeVideoId || !container) return;
+
+    initializeYoutubePlayer(container, youtubeVideoId).catch((error) => {
+      console.error('Failed to initialize YouTube playback:', error);
+    });
+  }, [youtubeVideoId, initializeYoutubePlayer]);
 
   const handlePlayPause = () => {
     togglePlayPause();
@@ -346,13 +352,34 @@ const Player = () => {
         </Box>
       </Box>
 
+      {isYoutube && youtubeVideoId && (
+        <Box sx={{ mt: 2 }}>
+          <Box
+            ref={youtubeContainerRef}
+            id="youtube-player-container"
+            data-testid="youtube-player-container"
+            sx={{ width: '100%', height: 200, borderRadius: 3, overflow: 'hidden' }}
+          />
+          {youtubeError !== null && (
+            <Alert severity="error" sx={{ mt: 1 }}>
+              O YouTube não conseguiu reproduzir este vídeo incorporado.{' '}
+              <Link
+                href={`https://www.youtube.com/watch?v=${encodeURIComponent(youtubeVideoId)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                color="inherit"
+                underline="always"
+              >
+                Abrir no YouTube
+              </Link>
+            </Alert>
+          )}
+        </Box>
+      )}
+
       {/* Expanded progress bar with YouTube player / Spotify info */}
       {showProgress && (
         <Box sx={{ mt: 2, borderTop: '1px solid rgba(255,255,255,0.1)', pt: 2 }}>
-          {isYoutube && youtubeVideoId && (
-            <Box ref={youtubeContainerRef} id="youtube-player-container" sx={{ width: '100%', height: 200, borderRadius: 12, overflow: 'hidden' }} />
-          )}
-          
           {isSpotify && spotifyPlaybackState && (
             <Box sx={{ p: 2, background: 'rgba(29, 185, 84, 0.1)', borderRadius: 12 }}>
               <Typography variant="subtitle2" color="success.main" gutterBottom>

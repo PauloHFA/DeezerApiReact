@@ -305,7 +305,7 @@ describe('usePlayer Hook', () => {
   });
 
   describe('playYoutube', () => {
-    it('should set YouTube video and start playing', async () => {
+    it('should select a YouTube video without assuming playback started', async () => {
       const track = createMockTrack();
       
       const { result } = renderHook(() => usePlayer(), {
@@ -317,7 +317,7 @@ describe('usePlayer Hook', () => {
       });
 
       expect(result.current.currentTrack).toEqual(track);
-      expect(result.current.isPlaying).toBe(true);
+      expect(result.current.isPlaying).toBe(false);
       expect(result.current.playbackSource).toBe('youtube');
       expect(result.current.youtubeVideoId).toBe('yt123');
       expect(result.current.currentlyPlaying).toBe(1);

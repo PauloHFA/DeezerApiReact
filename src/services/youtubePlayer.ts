@@ -24,11 +24,9 @@ type YTPlayer = any; // YT.Player type
 
 class YouTubePlayerService {
   private player: YTPlayer | null = null;
-  private playerElement: HTMLDivElement | null = null;
   private callbacks: YouTubePlayerCallbacks = {};
   private isApiReady = false;
-  private pendingVideoId: string | null = null;
-  private pendingAutoplay = false;
+  private isPlayerReady = false;
 
   /**
    * Load YouTube IFrame API script
@@ -72,11 +70,6 @@ class YouTubePlayerService {
       (window as any).onYouTubeIframeAPIReady = () => {
         this.isApiReady = true;
         resolve();
-        
-        // If there was a pending video, create player now
-        if (this.pendingVideoId && this.playerElement) {
-          this.createPlayer(this.playerElement, this.pendingVideoId, this.pendingAutoplay);
-        }
       };
     });
   }
@@ -90,17 +83,15 @@ class YouTubePlayerService {
     autoplay = true,
     callbacks: YouTubePlayerCallbacks = {}
   ): Promise<YTPlayer> {
-    this.playerElement = element;
     this.callbacks = callbacks;
 
     if (!this.isApiReady) {
-      this.pendingVideoId = videoId;
-      this.pendingAutoplay = autoplay;
       return this.loadAPI().then(() => this.createPlayer(element, videoId, autoplay, callbacks));
     }
 
     return new Promise((resolve, reject) => {
       try {
+        this.isPlayerReady = false;
         this.player = new window.YT.Player(element, {
           videoId,
           playerVars: {
@@ -119,6 +110,7 @@ class YouTubePlayerService {
           events: {
             onReady: (event: any) => {
               this.player = event.target;
+              this.isPlayerReady = true;
               this.callbacks.onReady?.();
               resolve(this.player);
             },
@@ -146,7 +138,7 @@ class YouTubePlayerService {
    * Load a new video
    */
   loadVideo(videoId: string, autoplay = true): Promise<void> {
-    if (!this.player) {
+    if (!this.isReady()) {
       return Promise.reject(new Error('Player not initialized'));
     }
 
@@ -224,14 +216,12 @@ class YouTubePlayerService {
   destroy(): void {
     this.player?.destroy();
     this.player = null;
-    this.playerElement = null;
-    this.pendingVideoId = null;
-    this.pendingAutoplay = false;
+    this.isPlayerReady = false;
   }
 
   // Check if player exists
   isReady(): boolean {
-    return this.player !== null && this.isApiReady;
+    return this.player !== null && this.isApiReady && this.isPlayerReady;
   }
 }
 

@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useState, useEffect, useCallback, ReactNode, useContext } from 'react';
 import { createTheme, Theme, ThemeOptions } from '@mui/material/styles';
 
 export type ThemeMode = 'light' | 'dark';
@@ -97,7 +97,6 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       if (saved === 'light' || saved === 'dark') {
         return saved;
       }
-      // Check system preference
       if (window.matchMedia('(prefers-color-scheme: light)').matches) {
         return 'light';
       }
@@ -115,14 +114,11 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     setMode(newMode);
   }, []);
 
-  // Persist theme to localStorage
   useEffect(() => {
     localStorage.setItem('ph-music-theme', mode);
-    // Apply to document for CSS variables if needed
     document.documentElement.setAttribute('data-theme', mode);
   }, [mode]);
 
-  // Listen for system theme changes
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
     const handleChange = (e: MediaQueryListEvent) => {
@@ -148,6 +144,12 @@ export const useTheme = () => {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
+};
+
+// Helper component to access theme for MuiThemeProvider
+export const ThemedApp = ({ children }: { children: (theme: Theme) => React.ReactNode }) => {
+  const { theme } = useTheme();
+  return <>{children(theme)}</>;
 };
 
 export default ThemeContext;

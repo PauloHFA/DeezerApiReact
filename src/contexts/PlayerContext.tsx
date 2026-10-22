@@ -37,6 +37,7 @@ export interface PlayerState {
   youtubePlayerState: YouTubePlayerState;
   youtubeDuration: number;
   youtubeCurrentTime: number;
+  youtubeError: number | null;
   
   // Spotify Web Playback SDK
   spotifyDeviceId: string | null;
@@ -60,6 +61,7 @@ interface PlayerContextValue extends PlayerState {
   playPreview: (trackOrUrl: Track | string) => void;
   stopPreview: () => void;
   playYoutube: (track: Track, videoId: string, thumbnailUrl?: string) => void;
+  initializeYoutubePlayer: (element: HTMLDivElement, videoId: string) => Promise<void>;
   stopYoutube: () => void;
   playSpotify: (track: Track, spotifyTrack: any) => Promise<void>;
   stopSpotify: () => void;
@@ -85,6 +87,7 @@ interface PlayerContextValue extends PlayerState {
     youtubePlayerState: YouTubePlayerState.UNSTARTED,
     youtubeDuration: 0,
     youtubeCurrentTime: 0,
+    youtubeError: null,
     spotifyDeviceId: null,
     spotifyPlaybackState: null,
     matchedTrack: null,
@@ -102,6 +105,7 @@ interface PlayerContextValue extends PlayerState {
     playPreview: () => {},
     stopPreview: () => {},
     playYoutube: () => {},
+    initializeYoutubePlayer: async () => {},
     stopYoutube: () => {},
     playSpotify: async () => {},
     stopSpotify: () => {},
@@ -132,6 +136,7 @@ interface PlayerContextValue extends PlayerState {
   const [youtubePlayerState, setYoutubePlayerState] = useState<YouTubePlayerState>(YouTubePlayerState.UNSTARTED);
   const [youtubeDuration, setYoutubeDuration] = useState(0);
   const [youtubeCurrentTime, setYoutubeCurrentTime] = useState(0);
+  const [youtubeError, setYoutubeError] = useState<number | null>(null);
   
   // Spotify Web Playback SDK
   const [spotifyDeviceId, setSpotifyDeviceId] = useState<string | null>(null);
@@ -144,6 +149,11 @@ interface PlayerContextValue extends PlayerState {
   const youtubePlayerRef = useRef(youtubePlayerService);
   const spotifyPlayerRef = useRef(spotifyWebPlaybackSDK);
   const progressIntervalRef = useRef<number | null>(null);
+  const volumeRef = useRef(volume);
+
+  useEffect(() => {
+    volumeRef.current = volume;
+  }, [volume]);
 
     // Persist player state to localStorage
     useEffect(() => {
@@ -216,28 +226,6 @@ interface PlayerContextValue extends PlayerState {
       spotifyPlayerRef.current.disconnect();
     };
   }, [spotifyService.isAuthenticated()]);
-
-  // YouTube Player state polling
-  useEffect(() => {
-    if (playbackSource === 'youtube' && youtubePlayerRef.current.isReady()) {
-      progressIntervalRef.current = window.setInterval(() => {
-        setYoutubeCurrentTime(youtubePlayerRef.current.getCurrentTime());
-        setYoutubeDuration(youtubePlayerRef.current.getDuration());
-        setYoutubePlayerState(youtubePlayerRef.current.getPlayerState());
-        
-        // Auto-play next when ended
-        if (youtubePlayerRef.current.getPlayerState() === YouTubePlayerState.ENDED) {
-          playNext();
-        }
-      }, 500);
-    }
-    
-    return () => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    };
-  }, [playbackSource, youtubeVideoId]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -332,6 +320,33 @@ interface PlayerContextValue extends PlayerState {
     }
   }, [queue, playTrack, playbackSource]);
 
+  // YouTube Player state polling
+  useEffect(() => {
+    if (playbackSource === 'youtube' && youtubeVideoId) {
+      progressIntervalRef.current = window.setInterval(() => {
+        if (!youtubePlayerRef.current.isReady()) {
+          return;
+        }
+
+        setYoutubeCurrentTime(youtubePlayerRef.current.getCurrentTime());
+        setYoutubeDuration(youtubePlayerRef.current.getDuration());
+        const playerState = youtubePlayerRef.current.getPlayerState();
+        setYoutubePlayerState(playerState);
+        setIsPlaying(playerState === YouTubePlayerState.PLAYING);
+
+        if (playerState === YouTubePlayerState.ENDED) {
+          playNext();
+        }
+      }, 500);
+    }
+
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, [playbackSource, youtubeVideoId, playNext]);
+
   const playPreview = useCallback((trackOrUrl: Track | string) => {
     setPlaybackSource('deezer');
     
@@ -360,36 +375,46 @@ interface PlayerContextValue extends PlayerState {
     setIsPlaying(false);
   }, []);
 
-  const playYoutube = useCallback(async (track: Track, videoId: string, thumbnailUrl = null) => {
+  const playYoutube = useCallback((track: Track, videoId: string, thumbnailUrl = null) => {
     setCurrentTrack(track);
     setYoutubeVideoId(videoId);
     setYoutubeThumbnail(thumbnailUrl);
+    setYoutubeError(null);
     setPreviewUrl(null);
     setCurrentlyPlaying(track?.id ?? null);
     setPlaybackSource('youtube');
-    setIsPlaying(true);
-    
-    // Create/load player
-    const playerContainer = document.getElementById('youtube-player-container');
-    if (playerContainer) {
-      await youtubePlayerRef.current.createPlayer(playerContainer, videoId, true, {
+    setIsPlaying(false);
+  }, []);
+
+  const initializeYoutubePlayer = useCallback(async (element: HTMLDivElement, videoId: string) => {
+    const callbacks = {
         onReady: () => {
-          youtubePlayerRef.current.setVolume(volume);
+          setYoutubeError(null);
+          youtubePlayerRef.current.setVolume(volumeRef.current);
         },
-        onStateChange: (state) => {
+        onStateChange: (state: number) => {
           setYoutubePlayerState(state);
-          if (state === YouTubePlayerState.PLAYING) {
-            setIsPlaying(true);
-          } else if (state === YouTubePlayerState.PAUSED || state === YouTubePlayerState.ENDED) {
-            setIsPlaying(false);
-          }
+          setIsPlaying(state === YouTubePlayerState.PLAYING);
         },
-        onError: (error) => {
+        onError: (error: number) => {
           console.error('YouTube Player error:', error);
+          setYoutubeError(error);
+          setIsPlaying(false);
         },
-      });
+    };
+
+    try {
+      if (youtubePlayerRef.current.isReady()) {
+        await youtubePlayerRef.current.loadVideo(videoId, true);
+        youtubePlayerRef.current.setVolume(volumeRef.current);
+      } else {
+        await youtubePlayerRef.current.createPlayer(element, videoId, true, callbacks);
+      }
+    } catch (error) {
+      setYoutubeError(-1);
+      throw error;
     }
-  }, [volume]);
+  }, []);
 
   const stopYoutube = useCallback(() => {
     youtubePlayerRef.current.stop();
@@ -477,6 +502,7 @@ interface PlayerContextValue extends PlayerState {
     youtubePlayerState,
     youtubeDuration,
     youtubeCurrentTime,
+    youtubeError,
     spotifyDeviceId,
     spotifyPlaybackState,
     matchedTrack,
@@ -494,6 +520,7 @@ interface PlayerContextValue extends PlayerState {
     playPreview,
     stopPreview,
     playYoutube,
+    initializeYoutubePlayer,
     stopYoutube,
     playSpotify,
     stopSpotify,
