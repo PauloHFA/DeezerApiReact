@@ -136,6 +136,40 @@ Reinicie o servidor (`npm run dev`) após alterar o `.env`. O arquivo `.env` é 
 
 Essa chave é usada para pesquisar vídeos e selecionar resultados marcados como incorporáveis; ela não habilita a reprodução de qualquer vídeo. O player de reprodução usa a YouTube IFrame Player API. Vídeos com incorporação bloqueada, indisponíveis na região ou removidos podem falhar; nesses casos, o player apresenta um link para abrir o vídeo diretamente no YouTube.
 
+### YouTube pelo ngrok
+
+Compare a mesma música no endereço local e na URL **HTTPS** do ngrok. Se apenas o
+túnel falhar, investigue o endereço público e os cabeçalhos antes de trocar os
+vídeos ou desfazer a integração com o Supabase. O player identifica a aplicação
+com a origem real da página e usa `strict-origin-when-cross-origin`, conforme a
+[recomendação do YouTube](https://developers.google.com/youtube/terms/required-minimum-functionality#api-client-identity-and-credentials).
+
+Para permitir um domínio específico no Vite, inicie o servidor no PowerShell
+com o hostname fornecido pelo ngrok (sem `https://` nem caminho):
+
+```powershell
+$env:__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS = 'seu-endereco.ngrok-free.app'
+npm run dev
+```
+
+Em outro terminal, encaminhe para a porta mostrada pelo Vite, por exemplo:
+
+```powershell
+ngrok http http://127.0.0.1:5173
+```
+
+Se o ngrok atribuir outro hostname, atualize a variável e reinicie o Vite.
+Caso a chave da YouTube Data API tenha restrições por referenciador, permita
+também o novo endereço HTTPS no Google Cloud Console. Uma recusa da busca
+(`403` em `googleapis.com`) é diferente de uma recusa da reprodução pelo iframe.
+
+O console registra o código do erro do player, a origem e a URL do vídeo para
+comparar o mesmo ID nos dois acessos. Os códigos `101`/`150` indicam que a
+reprodução incorporada foi recusada; `153` indica identificação ausente.
+Não é possível identificar uma mudança nas permissões do proprietário apenas
+por comparar erros de vídeos diferentes. O domínio do túnel precisa ser
+testado novamente para confirmar uma correção específica desse acesso.
+
 ### Login opcional e playlists pessoais
 
 O PH Music pode ser usado sem conta. No modo convidado, histórico de buscas/reproduções e playlists próprias ficam no armazenamento local do navegador. Para habilitar cadastro e login por e-mail/senha, login Google e sincronização, crie um projeto Supabase, configure estas variáveis no `.env` local e reinicie o Vite:

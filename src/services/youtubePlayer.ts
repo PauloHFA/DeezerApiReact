@@ -27,6 +27,11 @@ class YouTubePlayerService {
   private callbacks: YouTubePlayerCallbacks = {};
   private isApiReady = false;
   private isPlayerReady = false;
+  private playerContainer: HTMLDivElement | null = null;
+  private playerReadyPromise: Promise<YTPlayer> | null = null;
+  private cancelPlayerCreation: (() => void) | null = null;
+  private playerGeneration = 0;
+  private pendingVideo: { videoId: string; autoplay: boolean } | null = null;
 
   /**
    * Load YouTube IFrame API script
@@ -83,16 +88,36 @@ class YouTubePlayerService {
     autoplay = true,
     callbacks: YouTubePlayerCallbacks = {}
   ): Promise<YTPlayer> {
-    this.callbacks = callbacks;
-
     if (!this.isApiReady) {
       return this.loadAPI().then(() => this.createPlayer(element, videoId, autoplay, callbacks));
     }
 
-    return new Promise((resolve, reject) => {
+    const iframe = this.player?.getIframe?.();
+    if (this.playerContainer === element && iframe?.isConnected && element.contains(iframe)) {
+      this.callbacks = callbacks;
+      this.pendingVideo = { videoId, autoplay };
+      if (this.isReady()) {
+        return this.loadVideo(videoId, autoplay).then(() => this.player);
+      }
+      // A second selection while onReady is pending must use the same iframe.
+      return this.playerReadyPromise!;
+    }
+
+    this.destroy();
+    this.callbacks = callbacks;
+    this.playerContainer = element;
+    this.pendingVideo = { videoId, autoplay };
+    const generation = this.playerGeneration;
+
+    // YouTube replaces its target. Keep React's container and replace only a child.
+    const mountPoint = document.createElement('div');
+    element.replaceChildren(mountPoint);
+
+    this.playerReadyPromise = new Promise((resolve, reject) => {
+      this.cancelPlayerCreation = () => resolve(null);
       try {
         this.isPlayerReady = false;
-        this.player = new window.YT.Player(element, {
+        this.player = new window.YT.Player(mountPoint, {
           videoId,
           playerVars: {
             autoplay: autoplay ? 1 : 0,
@@ -109,29 +134,48 @@ class YouTubePlayerService {
           },
           events: {
             onReady: (event: any) => {
+              if (generation !== this.playerGeneration) return;
               this.player = event.target;
               this.isPlayerReady = true;
+              this.cancelPlayerCreation = null;
               this.callbacks.onReady?.();
+              const pending = this.pendingVideo;
+              if (pending && (pending.videoId !== videoId || pending.autoplay !== autoplay)) {
+                if (pending.autoplay) this.player.loadVideoById(pending.videoId);
+                else this.player.cueVideoById(pending.videoId);
+              }
               resolve(this.player);
             },
             onStateChange: (event: any) => {
+              if (generation !== this.playerGeneration) return;
               this.callbacks.onStateChange?.(event.data);
             },
             onPlaybackQualityChange: (event: any) => {
+              if (generation !== this.playerGeneration) return;
               this.callbacks.onPlaybackQualityChange?.(event.data);
             },
             onError: (event: any) => {
+              if (generation !== this.playerGeneration) return;
               this.callbacks.onError?.(event.data);
             },
             onApiChange: (event: any) => {
+              if (generation !== this.playerGeneration) return;
               this.callbacks.onApiChange?.();
             },
           },
         });
+        const playerIframe = this.player.getIframe?.();
+        if (playerIframe) {
+          playerIframe.referrerPolicy = 'strict-origin-when-cross-origin';
+          playerIframe.style.width = '100%';
+          playerIframe.style.height = '100%';
+          playerIframe.style.border = '0';
+        }
       } catch (error) {
         reject(error);
       }
     });
+    return this.playerReadyPromise;
   }
 
   /**
@@ -214,14 +258,23 @@ class YouTubePlayerService {
 
   // Cleanup
   destroy(): void {
+    this.playerGeneration += 1;
+    this.cancelPlayerCreation?.();
+    this.cancelPlayerCreation = null;
     this.player?.destroy();
     this.player = null;
     this.isPlayerReady = false;
+    this.playerContainer = null;
+    this.playerReadyPromise = null;
+    this.pendingVideo = null;
+    this.callbacks = {};
   }
 
   // Check if player exists
   isReady(): boolean {
-    return this.player !== null && this.isApiReady && this.isPlayerReady;
+    const iframe = this.player?.getIframe?.();
+    return this.player !== null && this.isApiReady && this.isPlayerReady &&
+      Boolean(iframe?.isConnected && this.playerContainer?.contains(iframe));
   }
 }
 

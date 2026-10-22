@@ -31,9 +31,12 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import SearchIcon from '@mui/icons-material/Search';
+import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
+import YouTubeIcon from '@mui/icons-material/YouTube';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAccount } from '@/contexts/AccountContext';
 import type { CustomPlaylist, SmartPlaylist } from '@/contexts/AccountContext';
+import AddToPlaylistDialog from '@/components/AddToPlaylistDialog';
 import { usePlayer } from '@/hooks/usePlayer';
 import { useNotification } from '@/hooks/useNotification';
 import { fetchYoutubeVideoData } from '@/services/youtubeApi';
@@ -59,6 +62,7 @@ const Library = () => {
   const [playlistName, setPlaylistName] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<CustomPlaylist | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [trackToSave, setTrackToSave] = useState<Track | null>(null);
 
   const selectedSmartPlaylist = smartPlaylists.find(
     (playlist) => `smart:${playlist.id}` === selectedListId
@@ -126,11 +130,30 @@ const Library = () => {
     try {
       const video = await fetchYoutubeVideoData(query);
       if (video) {
-        playYoutube(track, video.videoId, video.thumbnailUrl);
+        playYoutube(track, video.videoId, video.thumbnailUrl, video.candidateVideoIds);
         return;
       }
       window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, '_blank');
       notifyError('Não foi possível encontrar o vídeo automaticamente. Abrindo os resultados do YouTube.');
+    } catch (error) {
+      console.error('Failed to find a YouTube version of the track:', error);
+      notifyError('Falha ao buscar a faixa no YouTube.');
+    }
+  };
+
+  const handlePlayTrackOnYoutube = async (track: Track) => {
+    const query = `${track.title} ${track.artist.name}`;
+    info('Buscando vídeo no YouTube...');
+    try {
+      const video = await fetchYoutubeVideoData(query);
+      if (!video) {
+        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, '_blank');
+        notifyError('Não foi possível encontrar o vídeo automaticamente. Abrindo os resultados do YouTube.');
+        return;
+      }
+
+      playYoutube(track, video.videoId, video.thumbnailUrl, video.candidateVideoIds);
+      success('Vídeo selecionado. Se não iniciar automaticamente, use Reproduzir no player.');
     } catch (error) {
       console.error('Failed to find a YouTube version of the track:', error);
       notifyError('Falha ao buscar a faixa no YouTube.');
@@ -223,6 +246,25 @@ const Library = () => {
                           <PlayArrowIcon color="primary" />
                         </IconButton>
                       </Tooltip>
+                      <Tooltip title="Adicionar à playlist">
+                        <IconButton
+                          onClick={() => setTrackToSave(track)}
+                          aria-label={`Adicionar ${track.title} a uma playlist`}
+                        >
+                          <PlaylistAddIcon />
+                        </IconButton>
+                      </Tooltip>
+                      {selectedCustomPlaylist && (
+                        <Tooltip title="Reproduzir no YouTube">
+                          <IconButton
+                            onClick={() => void handlePlayTrackOnYoutube(track)}
+                            aria-label={`Reproduzir ${track.title} no YouTube`}
+                            color="error"
+                          >
+                            <YouTubeIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                       {selectedCustomPlaylist && (
                         <Tooltip title="Remover da playlist">
                           <IconButton
@@ -266,6 +308,11 @@ const Library = () => {
           )}
         </Paper>
 
+        <AddToPlaylistDialog
+          open={Boolean(trackToSave)}
+          track={trackToSave}
+          onClose={() => setTrackToSave(null)}
+        />
         <PlaylistEditorDialog
           open={editorOpen}
           editing={editingPlaylist}

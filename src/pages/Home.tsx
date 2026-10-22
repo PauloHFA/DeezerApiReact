@@ -15,11 +15,13 @@ import { fetchYoutubeVideoData } from '../services/youtubeApi';
 import { usePlayer } from '../hooks/usePlayer';
 import { useNotification } from '../hooks/useNotification';
 import { ArtistCard, TrackCard, PlaylistCard } from '../components/CardComponents';
+import AddToPlaylistDialog from '@/components/AddToPlaylistDialog';
 import { SkeletonGrid, SkeletonTrackList } from '../components/SkeletonLoader';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import AlbumIcon from '@mui/icons-material/Album';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
+import type { Track } from '@/types';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -30,6 +32,7 @@ const Home = () => {
   const [featuredArtists, setFeaturedArtists] = useState([]);
   const [topTracks, setTopTracks] = useState([]);
   const [topPlaylists, setTopPlaylists] = useState([]);
+  const [trackToSave, setTrackToSave] = useState<Track | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,8 +76,8 @@ const Home = () => {
       info('Preview não disponível. Buscando alternativa no YouTube...');
       const videoData = await fetchYoutubeVideoData(query);
       if (videoData) {
-        playYoutube(track, videoData.videoId, videoData.thumbnailUrl);
-        success('Reproduzindo via YouTube.');
+        playYoutube(track, videoData.videoId, videoData.thumbnailUrl, videoData.candidateVideoIds);
+        success('Vídeo selecionado. Se não iniciar automaticamente, use Reproduzir no player.');
         return;
       }
 
@@ -99,8 +102,8 @@ const Home = () => {
         notifyError('Não foi possível encontrar o vídeo automaticamente. Abrindo YouTube.');
         return;
       }
-      playYoutube(track, videoData.videoId, videoData.thumbnailUrl);
-      success('Reproduzindo no player do app.');
+      playYoutube(track, videoData.videoId, videoData.thumbnailUrl, videoData.candidateVideoIds);
+      success('Vídeo selecionado. Se não iniciar automaticamente, use Reproduzir no player.');
     },
     [info, notifyError, success, playYoutube]
   );
@@ -363,11 +366,17 @@ const Home = () => {
                   onPlay={() => navigate(`/album/${track.album.id}`)}
                   onPreview={() => handlePreviewTrack(track)}
                   onYoutube={() => handleOpenYoutube(track)}
+                  onAddToPlaylist={setTrackToSave}
                 />
               </Grid>
             ))}
           </Grid>
         </Box>
+        <AddToPlaylistDialog
+          open={Boolean(trackToSave)}
+          track={trackToSave}
+          onClose={() => setTrackToSave(null)}
+        />
 
         {/* Top Playlists Section */}
         <Box sx={{ mb: 8 }}>

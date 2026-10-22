@@ -131,4 +131,108 @@ describe('youtubePlayer Service', () => {
       expect(promise).toBeInstanceOf(Promise);
     });
   });
+
+  describe('iframe lifecycle', () => {
+    const instances: { player: any; options: any; iframe: HTMLIFrameElement }[] = [];
+    let container: HTMLDivElement;
+    let originalPlayerImplementation: any;
+
+    beforeEach(async () => {
+      instances.length = 0;
+      container = document.createElement('div');
+      document.body.append(container);
+      originalPlayerImplementation = vi.mocked(window.YT.Player).getMockImplementation();
+      vi.mocked(window.YT.Player).mockImplementation(function (target: HTMLElement, options: any) {
+        const iframe = document.createElement('iframe');
+        target.replaceWith(iframe);
+        const player = {
+          getIframe: () => iframe,
+          loadVideoById: vi.fn(),
+          cueVideoById: vi.fn(),
+          destroy: vi.fn(() => iframe.remove()),
+        };
+        instances.push({ player, options, iframe });
+        return player;
+      });
+      await youtubePlayerService.loadAPI();
+    });
+
+    afterEach(() => {
+      youtubePlayerService.destroy();
+      container.remove();
+      vi.mocked(window.YT.Player).mockImplementation(originalPlayerImplementation);
+    });
+
+    const ready = (index = 0) => {
+      const instance = instances[index];
+      instance.options.events.onReady({ target: instance.player });
+    };
+
+    it('keeps the React container mounted when YouTube replaces its target', async () => {
+      const pending = youtubePlayerService.createPlayer(container, 'first-video');
+      expect(container.isConnected).toBe(true);
+      expect(container.contains(instances[0].iframe)).toBe(true);
+      expect(instances[0].iframe.referrerPolicy).toBe('strict-origin-when-cross-origin');
+      ready();
+      await pending;
+      expect(youtubePlayerService.isReady()).toBe(true);
+    });
+
+    it('reuses a ready iframe for a second song and refreshes its callbacks', async () => {
+      const oldError = vi.fn();
+      const newError = vi.fn();
+      const first = youtubePlayerService.createPlayer(container, 'first-video', true, { onError: oldError });
+      ready();
+      await first;
+      await youtubePlayerService.createPlayer(container, 'second-video', true, { onError: newError });
+      expect(instances).toHaveLength(1);
+      expect(instances[0].player.loadVideoById).toHaveBeenCalledWith('second-video');
+      instances[0].options.events.onError({ data: 150 });
+      expect(newError).toHaveBeenCalledWith(150);
+      expect(oldError).not.toHaveBeenCalled();
+    });
+
+    it('loads only the latest selection when songs change before onReady', async () => {
+      const first = youtubePlayerService.createPlayer(container, 'first-video');
+      const second = youtubePlayerService.createPlayer(container, 'second-video');
+      const third = youtubePlayerService.createPlayer(container, 'third-video');
+      expect(instances).toHaveLength(1);
+      ready();
+      await Promise.all([first, second, third]);
+      expect(instances[0].player.loadVideoById).toHaveBeenCalledExactlyOnceWith('third-video');
+    });
+
+    it('recreates the player after React removes its previous container', async () => {
+      const first = youtubePlayerService.createPlayer(container, 'first-video');
+      ready();
+      await first;
+      container.remove();
+      expect(youtubePlayerService.isReady()).toBe(false);
+      container = document.createElement('div');
+      document.body.append(container);
+      const second = youtubePlayerService.createPlayer(container, 'second-video');
+      ready(1);
+      await second;
+      expect(instances).toHaveLength(2);
+      expect(instances[0].player.destroy).toHaveBeenCalledOnce();
+      expect(container.contains(instances[1].iframe)).toBe(true);
+    });
+
+    it('ignores events from an iframe destroyed during initialization', async () => {
+      const oldError = vi.fn();
+      const first = youtubePlayerService.createPlayer(container, 'first-video', true, { onError: oldError });
+      youtubePlayerService.destroy();
+      await first;
+      const currentError = vi.fn();
+      const second = youtubePlayerService.createPlayer(container, 'second-video', true, { onError: currentError });
+      ready();
+      instances[0].options.events.onError({ data: 150 });
+      expect(youtubePlayerService.isReady()).toBe(false);
+      expect(oldError).not.toHaveBeenCalled();
+      expect(currentError).not.toHaveBeenCalled();
+      ready(1);
+      await second;
+      expect(youtubePlayerService.isReady()).toBe(true);
+    });
+  });
 });

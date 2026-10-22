@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import { getAlbum, getAlbumTracks } from '../services/deezerApi';
 import { fetchYoutubeVideoData } from '../services/youtubeApi';
+import AddToPlaylistDialog from '@/components/AddToPlaylistDialog';
 import { usePlayer } from '../hooks/usePlayer';
 import { useNotification } from '../hooks/useNotification';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -30,6 +31,8 @@ import YouTubeIcon from '@mui/icons-material/YouTube';
 import AlbumIcon from '@mui/icons-material/Album';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
+import type { Track } from '@/types';
 
 const Album = () => {
   const { id } = useParams();
@@ -40,6 +43,7 @@ const Album = () => {
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState(null);
+  const [trackToSave, setTrackToSave] = useState<Track | null>(null);
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -80,8 +84,8 @@ const Album = () => {
       notifyError('Não foi possível encontrar o vídeo no YouTube.');
       return;
     }
-    playYoutube(track, videoData.videoId);
-    success('Reproduzindo no player do app.');
+    playYoutube(track, videoData.videoId, videoData.thumbnailUrl, videoData.candidateVideoIds);
+    success('Vídeo selecionado. Se não iniciar automaticamente, use Reproduzir no player.');
   };
 
   const formatDuration = (duration) => {
@@ -303,6 +307,15 @@ const Album = () => {
                           <PlayArrowIcon />
                         </IconButton>
                       </Tooltip>
+                      <Tooltip title="Adicionar à playlist">
+                        <IconButton
+                          size="small"
+                          onClick={() => setTrackToSave(track)}
+                          aria-label={`Adicionar ${track.title} a uma playlist`}
+                        >
+                          <PlaylistAddIcon />
+                        </IconButton>
+                      </Tooltip>
                     </Box>
                   }
                 >
@@ -321,6 +334,11 @@ const Album = () => {
             ))}
           </List>
         </Paper>
+        <AddToPlaylistDialog
+          open={Boolean(trackToSave)}
+          track={trackToSave}
+          onClose={() => setTrackToSave(null)}
+        />
       </Box>
     );
 };

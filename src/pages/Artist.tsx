@@ -9,7 +9,6 @@ import {
   Typography,
   CircularProgress,
   IconButton,
-  Collapse,
   List,
   ListItem,
   ListItemText,
@@ -20,18 +19,20 @@ import {
   Skeleton,
   Paper,
 } from '@mui/material';
-import { getArtist, getArtistAlbums, getArtistTopTracks, getAlbumTracks } from '../services/deezerApi';
+import { getArtist, getArtistAlbums, getArtistTopTracks } from '../services/deezerApi';
 import { fetchYoutubeVideoData } from '../services/youtubeApi';
 import { usePlayer } from '../hooks/usePlayer';
 import { useNotification } from '../hooks/useNotification';
 import { AlbumCard } from '../components/CardComponents';
+import AddToPlaylistDialog from '@/components/AddToPlaylistDialog';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import AlbumIcon from '@mui/icons-material/Album';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PreviewIcon from '@mui/icons-material/PlayCircleOutline';
 import YouTubeIcon from '@mui/icons-material/YouTube';
+import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
+import type { Track } from '@/types';
 
 const Artist = () => {
   const { id } = useParams();
@@ -42,8 +43,7 @@ const Artist = () => {
   const [albums, setAlbums] = useState([]);
   const [topTracks, setTopTracks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [expandedAlbum, setExpandedAlbum] = useState(null);
-  const [albumTracks, setAlbumTracks] = useState({});
+  const [trackToSave, setTrackToSave] = useState<Track | null>(null);
 
   useEffect(() => {
     const fetchArtistData = async () => {
@@ -66,27 +66,6 @@ const Artist = () => {
     fetchArtistData();
   }, [id]);
 
-  const handleAlbumClick = async (albumId) => {
-    if (expandedAlbum === albumId) {
-      setExpandedAlbum(null);
-      return;
-    }
-
-    setExpandedAlbum(albumId);
-
-    if (!albumTracks[albumId]) {
-      try {
-        const tracksData = await getAlbumTracks(albumId);
-        setAlbumTracks(prev => ({
-          ...prev,
-          [albumId]: tracksData.data
-        }));
-      } catch (error) {
-        console.error('Error fetching album tracks:', error);
-      }
-    }
-  };
-
   const handlePreviewTrack = (track) => {
     if (currentlyPlaying === track.id) {
       stopPreview();
@@ -103,8 +82,8 @@ const Artist = () => {
       error('Não foi possível encontrar o vídeo no YouTube.');
       return;
     }
-    playYoutube(track, videoData.videoId);
-    success('Reproduzindo no player do app.');
+    playYoutube(track, videoData.videoId, videoData.thumbnailUrl, videoData.candidateVideoIds);
+    success('Vídeo selecionado. Se não iniciar automaticamente, use Reproduzir no player.');
   };
 
   const formatDuration = (duration) => {
@@ -379,6 +358,15 @@ const Artist = () => {
                       <YouTubeIcon />
                     </IconButton>
                   </Tooltip>
+                  <Tooltip title="Adicionar à playlist">
+                    <IconButton
+                      size="small"
+                      onClick={() => setTrackToSave(track)}
+                      aria-label={`Adicionar ${track.title} a uma playlist`}
+                    >
+                      <PlaylistAddIcon />
+                    </IconButton>
+                  </Tooltip>
                 </ListItem>
               ))}
             </List>
@@ -409,83 +397,17 @@ const Artist = () => {
           <Grid container spacing={3}>
             {albums.map((album) => (
               <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={album.id}>
-                <AlbumCard album={album} onClick={() => handleAlbumClick(album.id)} />
+                <AlbumCard album={album} onClick={() => navigate(`/album/${album.id}`)} />
               </Grid>
             ))}
           </Grid>
         </Box>
 
-        {/* Album Tracks Expansion */}
-        {expandedAlbum && albumTracks[expandedAlbum]?.length > 0 && (
-          <Paper
-            elevation={2}
-            sx={{
-              p: 3,
-              mb: 4,
-              background: 'linear-gradient(to right, #1A1A1A, #000000)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 0, 0, 0.1)',
-            }}
-          >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6" component="h2">
-                Faixas de {albums.find(a => a.id === expandedAlbum)?.title}
-              </Typography>
-              <IconButton onClick={() => setExpandedAlbum(null)}>
-                <PauseIcon />
-              </IconButton>
-            </Box>
-            <List>
-              {albumTracks[expandedAlbum]?.map((track, index) => (
-                <ListItem
-                  key={track.id}
-                  sx={{
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 0, 0, 0.1)',
-                    },
-                    borderBottom: '1px solid rgba(255,255,255,0.05)',
-                  }}
-                >
-                  <ListItemIcon>
-                    <Typography variant="body2" color="text.secondary" sx={{ minWidth: 30, textAlign: 'center' }}>
-                      {index + 1}
-                    </Typography>
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={track.title}
-                    secondary={formatDuration(track.duration)}
-                  />
-                  <Tooltip title="Preview">
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePreviewTrack(track);
-                      }}
-                      sx={{
-                        color: currentlyPlaying === track.id ? 'primary.main' : 'inherit',
-                      }}
-                    >
-                      <PreviewIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="YouTube">
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenYoutube(track);
-                      }}
-                      color="error"
-                    >
-                      <YouTubeIcon />
-                    </IconButton>
-                  </Tooltip>
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        )}
+        <AddToPlaylistDialog
+          open={Boolean(trackToSave)}
+          track={trackToSave}
+          onClose={() => setTrackToSave(null)}
+        />
       </Box>
     );
 };

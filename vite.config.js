@@ -19,13 +19,10 @@ export default defineConfig({
         secure: false,
       }
     },
-    host: true,
+    host: '127.0.0.1',
     cors: true,
-    allowedHosts: [
-      'localhost',
-      '.serveo.net'  
-    ],
     headers: {
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Authorization'

@@ -26,6 +26,7 @@ import {
   MusicNote,
 } from '@mui/icons-material';
 import { usePlayer, PlaybackSource } from '../hooks/usePlayer';
+import { youtubePlayerService } from '../services/youtubePlayer';
 
 const Player = () => {
   const {
@@ -132,12 +133,19 @@ const Player = () => {
   // The iframe must exist before the YouTube API can attach to it.
   useEffect(() => {
     const container = youtubeContainerRef.current;
-    if (!youtubeVideoId || !container) return;
+    if (playbackSource !== 'youtube' || !youtubeVideoId || !container) return;
 
     initializeYoutubePlayer(container, youtubeVideoId).catch((error) => {
       console.error('Failed to initialize YouTube playback:', error);
     });
-  }, [youtubeVideoId, initializeYoutubePlayer]);
+  }, [playbackSource, youtubeVideoId, initializeYoutubePlayer]);
+
+  // Destroy the iframe when its React container is removed, including source changes.
+  const hasYoutubePlayer = playbackSource === 'youtube' && Boolean(currentTrack && youtubeVideoId);
+  useEffect(() => {
+    if (!hasYoutubePlayer) return;
+    return () => youtubePlayerService.destroy();
+  }, [hasYoutubePlayer]);
 
   const handlePlayPause = () => {
     togglePlayPause();
@@ -362,15 +370,17 @@ const Player = () => {
           />
           {youtubeError !== null && (
             <Alert severity="error" sx={{ mt: 1 }}>
-              O YouTube não conseguiu reproduzir este vídeo incorporado.{' '}
+              Os vídeos encontrados não puderam ser reproduzidos neste player.{' '}
               <Link
-                href={`https://www.youtube.com/watch?v=${encodeURIComponent(youtubeVideoId)}`}
+                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(
+                  `${currentTrack.title} ${currentTrack.artist.name}`
+                )}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 color="inherit"
                 underline="always"
               >
-                Abrir no YouTube
+                Buscar no YouTube
               </Link>
             </Alert>
           )}

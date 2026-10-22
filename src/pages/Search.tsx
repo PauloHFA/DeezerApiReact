@@ -2,10 +2,6 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   TextField,
   Grid,
   Typography,
@@ -13,7 +9,6 @@ import {
   Paper,
   InputAdornment,
   Container,
-  Stack,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { searchArtists, searchTracks, searchAlbums, searchPlaylists, getTrackPreview } from '@/services/deezerApi';
@@ -29,8 +24,8 @@ import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PersonIcon from '@mui/icons-material/Person';
 import AlbumIcon from '@mui/icons-material/Album';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
-import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 import { useAccount } from '@/contexts/AccountContext';
+import AddToPlaylistDialog from '@/components/AddToPlaylistDialog';
 import type { Artist, Track, Album, Playlist } from '@/types';
 
 interface SearchResults {
@@ -44,11 +39,10 @@ interface SearchResults {
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [trackToSave, setTrackToSave] = useState<Track | null>(null);
-  const [newPlaylistName, setNewPlaylistName] = useState('');
   const navigate = useNavigate();
   const { currentlyPlaying, playPreview, stopPreview, playYoutube, matchCurrentTrack } = usePlayer();
   const { info, error, success } = useNotification();
-  const { library, recordSearch, createPlaylist, addTrackToPlaylist } = useAccount();
+  const { recordSearch } = useAccount();
   const debouncedQuery = useDebounce(searchQuery, 500);
 
   // Create search function with cache
@@ -112,8 +106,8 @@ const Search = () => {
       info('Preview não disponível. Buscando alternativa no YouTube...');
       const videoData = await fetchYoutubeVideoData(query);
       if (videoData) {
-        playYoutube(track, videoData.videoId, videoData.thumbnailUrl);
-        success('Reproduzindo via YouTube.');
+        playYoutube(track, videoData.videoId, videoData.thumbnailUrl, videoData.candidateVideoIds);
+        success('Vídeo selecionado. Se não iniciar automaticamente, use Reproduzir no player.');
         return;
       }
 
@@ -138,8 +132,8 @@ const Search = () => {
         error('Não foi possível encontrar o vídeo automaticamente. Abrindo YouTube.');
         return;
       }
-      playYoutube(track, videoData.videoId, videoData.thumbnailUrl);
-      success('Reproduzindo no player do app.');
+      playYoutube(track, videoData.videoId, videoData.thumbnailUrl, videoData.candidateVideoIds);
+      success('Vídeo selecionado. Se não iniciar automaticamente, use Reproduzir no player.');
     },
     [info, error, success, playYoutube]
   );
@@ -169,26 +163,6 @@ const Search = () => {
 
   const handleSaveTrack = (track: Track) => {
     setTrackToSave(track);
-    setNewPlaylistName('');
-  };
-
-  const handleAddTrackToPlaylist = (playlistId: string) => {
-    if (!trackToSave) return;
-    addTrackToPlaylist(playlistId, trackToSave);
-    success('Faixa adicionada à playlist.');
-    setTrackToSave(null);
-  };
-
-  const handleCreatePlaylistWithTrack = () => {
-    if (!trackToSave) return;
-    try {
-      const playlistId = createPlaylist(newPlaylistName);
-      addTrackToPlaylist(playlistId, trackToSave);
-      success('Playlist criada e faixa adicionada.');
-      setTrackToSave(null);
-    } catch (caughtError) {
-      error(caughtError instanceof Error ? caughtError.message : 'Não foi possível criar a playlist.');
-    }
   };
 
   return (
@@ -462,49 +436,11 @@ const Search = () => {
           </Box>
         )}
       </Box>
-      <Dialog
+      <AddToPlaylistDialog
         open={Boolean(trackToSave)}
+        track={trackToSave}
         onClose={() => setTrackToSave(null)}
-        fullWidth
-        maxWidth="xs"
-      >
-        <DialogTitle>Adicionar à playlist</DialogTitle>
-        <DialogContent>
-          <Stack spacing={1} sx={{ mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              {trackToSave?.title} — {trackToSave?.artist.name}
-            </Typography>
-            {library.playlists.map((playlist) => (
-              <Button
-                key={playlist.id}
-                variant="outlined"
-                startIcon={<PlaylistAddIcon />}
-                onClick={() => handleAddTrackToPlaylist(playlist.id)}
-                fullWidth
-              >
-                {playlist.name}
-              </Button>
-            ))}
-            {!library.playlists.length && (
-              <Typography variant="body2" color="text.secondary">
-                Você ainda não tem playlists. Crie uma para salvar esta faixa.
-              </Typography>
-            )}
-            <TextField
-              label="Nome da nova playlist"
-              value={newPlaylistName}
-              onChange={(event) => setNewPlaylistName(event.target.value)}
-              fullWidth
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setTrackToSave(null)} color="inherit">Cancelar</Button>
-          <Button onClick={handleCreatePlaylistWithTrack} variant="contained">
-            Criar e adicionar
-          </Button>
-        </DialogActions>
-      </Dialog>
+      />
     </Container>
   );
 };

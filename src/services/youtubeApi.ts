@@ -2,6 +2,7 @@ const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
 export interface YoutubeVideoData {
   videoId: string;
+  candidateVideoIds: string[];
   title: string;
   channelTitle: string;
   thumbnailUrl: string;
@@ -19,7 +20,8 @@ export const fetchYoutubeVideoData = async (
     part: 'snippet',
     type: 'video',
     videoEmbeddable: 'true',
-    maxResults: '1',
+    videoSyndicated: 'true',
+    maxResults: '5',
     q: query,
     key: YOUTUBE_API_KEY,
   });
@@ -32,7 +34,8 @@ export const fetchYoutubeVideoData = async (
   }
 
   const data = await response.json();
-  const item = data?.items?.[0];
+  const items = data?.items ?? [];
+  const item = items.find((candidate: any) => candidate.id?.videoId);
   if (!item || !item.id?.videoId) {
     return null;
   }
@@ -43,6 +46,9 @@ export const fetchYoutubeVideoData = async (
 
   return {
     videoId: item.id.videoId,
+    candidateVideoIds: items
+      .map((candidate: any) => candidate.id?.videoId)
+      .filter((videoId: string | undefined): videoId is string => Boolean(videoId)),
     title: item.snippet?.title ?? '',
     channelTitle: item.snippet?.channelTitle ?? '',
     thumbnailUrl,

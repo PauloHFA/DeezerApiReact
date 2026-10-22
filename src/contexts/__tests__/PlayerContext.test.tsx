@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 import { PlayerProvider, PlayerContext } from '@/contexts/PlayerContext';
 import { AccountProvider } from '@/contexts/AccountContext';
 import { usePlayer } from '@/hooks/usePlayer';
+import { youtubePlayerService } from '@/services/youtubePlayer';
 import type { Track, PlaybackSource } from '@/types';
 import { renderHook, act } from '@testing-library/react';
 
@@ -21,6 +22,7 @@ vi.mock('@/services/youtubePlayer', () => ({
     getDuration: vi.fn().mockReturnValue(180),
     getCurrentTime: vi.fn().mockReturnValue(30),
     getPlayerState: vi.fn().mockReturnValue(1), // PLAYING
+    getVideoUrl: vi.fn().mockReturnValue('https://www.youtube.com/watch?v=blocked-video'),
     isReady: vi.fn().mockReturnValue(true),
     destroy: vi.fn(),
   },
@@ -135,6 +137,8 @@ describe('PlayerContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+    vi.mocked(youtubePlayerService.isReady).mockReturnValue(true);
+    vi.mocked(youtubePlayerService.createPlayer).mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -357,6 +361,34 @@ describe('PlayerContext', () => {
       expect(screen.getByTestId('playback-source').textContent).toBe('youtube');
       expect(screen.getByTestId('youtube-video-id').textContent).toBe('yt123');
       expect(screen.getByTestId('currently-playing').textContent).toBe('1');
+    });
+
+    it('should try the next candidate when YouTube blocks video embedding', async () => {
+      const track = createMockTrack();
+      let onError: ((error: number) => void) | undefined;
+
+      vi.mocked(youtubePlayerService.isReady).mockReturnValue(false);
+      vi.mocked(youtubePlayerService.createPlayer).mockImplementation(
+        (_element, _videoId, _autoplay, callbacks) => {
+          onError = callbacks.onError;
+          return Promise.resolve(undefined);
+        }
+      );
+
+      const { result } = renderHook(() => usePlayer(), {
+        wrapper: TestWrapperWithConsumer,
+      });
+
+      await act(async () => {
+        result.current.playYoutube(track, 'blocked-video', undefined, ['blocked-video', 'available-video']);
+        await result.current.initializeYoutubePlayer(document.createElement('div'), 'blocked-video');
+      });
+
+      await act(async () => {
+        onError?.(150);
+      });
+
+      expect(screen.getByTestId('youtube-video-id').textContent).toBe('available-video');
     });
   });
 
@@ -690,6 +722,5 @@ describe('PlayerContext', () => {
             expect(screen.getByTestId('currently-playing').textContent).toBe('42');
           });
         });
-
 
 

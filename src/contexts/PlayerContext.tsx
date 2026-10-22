@@ -61,7 +61,7 @@ interface PlayerContextValue extends PlayerState {
   playNext: () => void;
   playPreview: (trackOrUrl: Track | string) => void;
   stopPreview: () => void;
-  playYoutube: (track: Track, videoId: string, thumbnailUrl?: string) => void;
+  playYoutube: (track: Track, videoId: string, thumbnailUrl?: string, candidateVideoIds?: string[]) => void;
   initializeYoutubePlayer: (element: HTMLDivElement, videoId: string) => Promise<void>;
   stopYoutube: () => void;
   playSpotify: (track: Track, spotifyTrack: any) => Promise<void>;
@@ -149,6 +149,7 @@ interface PlayerContextValue extends PlayerState {
   
   // Refs for services
   const youtubePlayerRef = useRef(youtubePlayerService);
+  const youtubeFallbackVideoIdsRef = useRef<string[]>([]);
   const spotifyPlayerRef = useRef(spotifyWebPlaybackSDK);
   const progressIntervalRef = useRef<number | null>(null);
   const volumeRef = useRef(volume);
@@ -247,6 +248,7 @@ interface PlayerContextValue extends PlayerState {
 
   // Core actions
   const playTrack = useCallback(async (track: Track, source: PlaybackSource = 'deezer') => {
+    youtubeFallbackVideoIdsRef.current = [];
     setCurrentTrack(track);
     setCurrentlyPlaying(track?.id ?? null);
     setPlaybackSource(source);
@@ -356,6 +358,7 @@ interface PlayerContextValue extends PlayerState {
   }, [playbackSource, youtubeVideoId, playNext]);
 
   const playPreview = useCallback((trackOrUrl: Track | string) => {
+    youtubeFallbackVideoIdsRef.current = [];
     setPlaybackSource('deezer');
     
     if (typeof trackOrUrl === 'string') {
@@ -383,7 +386,14 @@ interface PlayerContextValue extends PlayerState {
     setIsPlaying(false);
   }, []);
 
-  const playYoutube = useCallback((track: Track, videoId: string, thumbnailUrl = null) => {
+  const playYoutube = useCallback((
+    track: Track,
+    videoId: string,
+    thumbnailUrl: string | null = null,
+    candidateVideoIds: string[] = []
+  ) => {
+    youtubeFallbackVideoIdsRef.current = [...new Set(candidateVideoIds)]
+      .filter((candidateId) => candidateId !== videoId);
     setCurrentTrack(track);
     setYoutubeVideoId(videoId);
     setYoutubeThumbnail(thumbnailUrl);
@@ -405,19 +415,27 @@ interface PlayerContextValue extends PlayerState {
           setIsPlaying(state === YouTubePlayerState.PLAYING);
         },
         onError: (error: number) => {
-          console.error('YouTube Player error:', error);
+          console.error('YouTube Player error:', error, {
+            origin: window.location.origin,
+            videoUrl: youtubePlayerRef.current.getVideoUrl(),
+          });
+          if ([100, 101, 150].includes(error)) {
+            const fallbackVideoId = youtubeFallbackVideoIdsRef.current.shift();
+            if (fallbackVideoId) {
+              setYoutubeError(null);
+              setYoutubeVideoId(fallbackVideoId);
+              setIsPlaying(false);
+              return;
+            }
+          }
           setYoutubeError(error);
           setIsPlaying(false);
         },
     };
 
     try {
-      if (youtubePlayerRef.current.isReady()) {
-        await youtubePlayerRef.current.loadVideo(videoId, true);
-        youtubePlayerRef.current.setVolume(volumeRef.current);
-      } else {
-        await youtubePlayerRef.current.createPlayer(element, videoId, true, callbacks);
-      }
+      await youtubePlayerRef.current.createPlayer(element, videoId, true, callbacks);
+      youtubePlayerRef.current.setVolume(volumeRef.current);
     } catch (error) {
       setYoutubeError(-1);
       throw error;
@@ -425,6 +443,7 @@ interface PlayerContextValue extends PlayerState {
   }, []);
 
   const stopYoutube = useCallback(() => {
+    youtubeFallbackVideoIdsRef.current = [];
     youtubePlayerRef.current.stop();
     setYoutubeVideoId(null);
     setYoutubeThumbnail(null);
@@ -433,6 +452,7 @@ interface PlayerContextValue extends PlayerState {
   }, []);
 
   const playSpotify = useCallback(async (track: Track, spotifyTrack: any) => {
+    youtubeFallbackVideoIdsRef.current = [];
     if (!spotifyDeviceId) {
       console.error('No Spotify device available');
       return;
