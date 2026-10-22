@@ -7,9 +7,8 @@ import {
   IconButton,
   Box,
   Tooltip,
-  Chip,
 } from '@mui/material';
-import { PlayArrow, Pause, YouTube, MusicNote, Person, Album as AlbumIcon, QueueMusic } from '@mui/icons-material';
+import { PlayArrow, Pause, YouTube, MusicNote, PlaylistAdd } from '@mui/icons-material';
 import type { Track, Artist, Album, Playlist } from '@/types';
 
 // Unified card dimensions
@@ -23,6 +22,7 @@ interface TrackCardProps {
   onPreview?: (track: Track) => void | Promise<void>;
   onYoutube?: (track: Track) => void | Promise<void>;
   onSpotify?: (track: Track) => void | Promise<void>;
+  onAddToPlaylist?: (track: Track) => void;
   hasSpotify?: boolean;
 }
 
@@ -73,7 +73,15 @@ BaseCard.displayName = 'BaseCard';
 /**
  * Unified CardMedia with consistent sizing
  */
-const UnifiedCardMedia = ({ image, alt, variant = 'square', ...props }: any) => {
+const UnifiedCardMedia = ({
+  image,
+  alt,
+  variant = 'square',
+}: {
+  image?: string;
+  alt: string;
+  variant?: 'square' | 'circle';
+}) => {
   const mediaStyles = {
     square: {
       height: CARD_MEDIA_HEIGHT,
@@ -94,7 +102,6 @@ const UnifiedCardMedia = ({ image, alt, variant = 'square', ...props }: any) => 
       image={image}
       alt={alt}
       sx={mediaStyles[variant]}
-      {...props}
     />
   );
 };
@@ -127,7 +134,7 @@ UnifiedCardContent.displayName = 'UnifiedCardContent';
 /**
  * TrackCard Component - Memoized
  */
-export const TrackCard = memo<TrackCardProps>(({ track, isPlaying, onPlay, onPreview, onYoutube, onSpotify, hasSpotify }) => {
+export const TrackCard = memo<TrackCardProps>(({ track, isPlaying, onPlay, onPreview, onYoutube, onSpotify, onAddToPlaylist, hasSpotify }) => {
   return (
     <BaseCard>
       <UnifiedCardMedia
@@ -164,6 +171,20 @@ export const TrackCard = memo<TrackCardProps>(({ track, isPlaying, onPlay, onPre
             <Tooltip title="Spotify (completa)">
               <IconButton size="small" onClick={(e) => { e.stopPropagation(); onSpotify?.(track); }} color="success">
                 <MusicNote />
+              </IconButton>
+            </Tooltip>
+          )}
+          {onAddToPlaylist && (
+            <Tooltip title="Adicionar a uma playlist">
+              <IconButton
+                size="small"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onAddToPlaylist(track);
+                }}
+                aria-label={`Adicionar ${track.title} a uma playlist`}
+              >
+                <PlaylistAdd />
               </IconButton>
             </Tooltip>
           )}

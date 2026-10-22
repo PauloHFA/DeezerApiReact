@@ -78,6 +78,12 @@ export interface Playlist {
   creation_date?: string;
   md5_image?: string;
   picture?: string;
+  creator?: {
+    id?: number;
+    name: string;
+    type?: string;
+    link?: string;
+  };
   type: string;
 }
 

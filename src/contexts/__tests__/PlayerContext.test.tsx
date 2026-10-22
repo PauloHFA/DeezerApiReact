@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { PlayerProvider, PlayerContext } from '@/contexts/PlayerContext';
+import { AccountProvider } from '@/contexts/AccountContext';
 import { usePlayer } from '@/hooks/usePlayer';
 import type { Track, PlaybackSource } from '@/types';
 import { renderHook, act } from '@testing-library/react';
@@ -96,7 +97,9 @@ const createMockTrack = (overrides: Partial<Track> = {}): Track => ({
 
 // Test wrapper component - only renders the provider
 const TestWrapper = ({ children }: { children: ReactNode }) => (
-  <PlayerProvider>{children}</PlayerProvider>
+  <AccountProvider>
+    <PlayerProvider>{children}</PlayerProvider>
+  </AccountProvider>
 );
 
 // Hook consumer for testing - renders state to DOM for assertions
@@ -120,10 +123,12 @@ const HookConsumer = () => {
 
 // Wrapper for all tests - includes consumer for DOM assertions
 const TestWrapperWithConsumer = ({ children }: { children: ReactNode }) => (
-  <PlayerProvider>
-    <HookConsumer />
-    {children}
-  </PlayerProvider>
+  <AccountProvider>
+    <PlayerProvider>
+      <HookConsumer />
+      {children}
+    </PlayerProvider>
+  </AccountProvider>
 );
 
 describe('PlayerContext', () => {
@@ -685,7 +690,6 @@ describe('PlayerContext', () => {
             expect(screen.getByTestId('currently-playing').textContent).toBe('42');
           });
         });
-
 
 
 

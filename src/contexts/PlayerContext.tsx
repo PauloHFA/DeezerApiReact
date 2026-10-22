@@ -4,6 +4,7 @@ import { spotifyService } from '../services/spotifyApi';
 import { spotifyWebPlaybackSDK } from '../services/spotifyWebPlayback';
 import { trackMatchingService, MatchedTrack } from '../services/trackMatching';
 import type { Track } from '../types';
+import { useAccount } from './AccountContext';
 
 // Persisted player state interface
 interface PersistedPlayerState {
@@ -119,6 +120,7 @@ interface PlayerContextValue extends PlayerState {
   export const PlayerContext = createContext<PlayerContextValue>(defaultContextValue);
 
   export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
+    const { recordTrackPlayed } = useAccount();
   // Core state
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -154,6 +156,12 @@ interface PlayerContextValue extends PlayerState {
   useEffect(() => {
     volumeRef.current = volume;
   }, [volume]);
+
+  useEffect(() => {
+    if (isPlaying && currentTrack) {
+      recordTrackPlayed(currentTrack);
+    }
+  }, [isPlaying, currentTrack, recordTrackPlayed]);
 
     // Persist player state to localStorage
     useEffect(() => {

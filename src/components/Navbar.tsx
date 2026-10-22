@@ -6,10 +6,14 @@ import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import SpotifyIcon from '@mui/icons-material/MusicNote'; // Using MusicNote as Spotify icon
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
+import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAccount } from '../contexts/AccountContext';
 
 const Navbar = () => {
   const { mode, toggleTheme } = useTheme();
+  const { user } = useAccount();
 
   return (
     <AppBar position="static" elevation={0} sx={{ background: 'linear-gradient(to right, #000000, #1A1A1A)' }}>
@@ -57,6 +61,24 @@ const Navbar = () => {
               }}
             >
               Search
+            </Button>
+            <Button
+              color="inherit"
+              component={RouterLink}
+              to="/library"
+              startIcon={<LibraryMusicIcon />}
+              sx={{ '&:hover': { backgroundColor: 'rgba(255, 0, 0, 0.1)' } }}
+            >
+              Minhas listas
+            </Button>
+            <Button
+              color="inherit"
+              component={RouterLink}
+              to="/account"
+              startIcon={<AccountCircleIcon />}
+              sx={{ '&:hover': { backgroundColor: 'rgba(255, 0, 0, 0.1)' } }}
+            >
+              {user ? 'Minha conta' : 'Entrar'}
             </Button>
             <Button
               color="inherit"

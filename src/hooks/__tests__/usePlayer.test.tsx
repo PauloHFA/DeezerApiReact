@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { usePlayer } from '@/hooks/usePlayer';
 import { PlayerProvider } from '@/contexts/PlayerContext';
+import { AccountProvider } from '@/contexts/AccountContext';
 import type { Track, PlaybackSource } from '@/types';
 
 // Mock dos serviços
@@ -94,7 +95,9 @@ const createMockTrack = (overrides: Partial<Track> = {}): Track => ({
 
 // Test wrapper
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <PlayerProvider>{children}</PlayerProvider>
+  <AccountProvider>
+    <PlayerProvider>{children}</PlayerProvider>
+  </AccountProvider>
 );
 
 describe('usePlayer Hook', () => {

@@ -80,12 +80,16 @@ src/
 ### Reprodução de Áudio
 - Player fixo no rodapé com controles de play/pause, volume e fila
 - Prévia (preview) de 30s de faixas selecionadas via Deezer API
+- Reprodução de faixas pelo YouTube com busca via YouTube Data API v3 e player incorporado (IFrame Player API)
+- Busca de vídeos incorporáveis e link para abrir no YouTube quando o vídeo não puder tocar incorporado
 - Sincronização de estado de reprodução entre componentes
 
 ### Estado e Persistência
 - Favoritos (artistas, álbuns, playlists, faixas) persistidos em localStorage
 - Sistema de notificações Toast (success, error, warning, info)
-- Histórico de buscas e fila de reprodução
+- Fila de reprodução e histórico de até 300 reproduções e 100 buscas
+- Listas inteligentes por reproduções recentes, faixas mais ouvidas e resultados de buscas
+- Playlists próprias editáveis; convidado usa armazenamento local e a conta Supabase opcional sincroniza a biblioteca
 
 ### UX/Loading States
 - Skeleton loaders para cards durante carregamento
@@ -119,6 +123,47 @@ npm run lint
 ```
 
 Aplicação será acessível em `http://localhost:5173` com HMR (Hot Module Replacement) habilitado.
+
+### Chave da YouTube Data API
+
+Para habilitar a busca automática de vídeos, crie uma chave no [Google Cloud Console](https://console.cloud.google.com/apis/credentials), habilite a **YouTube Data API v3** no projeto e adicione ao arquivo `.env` na raiz:
+
+```env
+VITE_YOUTUBE_API_KEY=sua_chave_do_youtube
+```
+
+Reinicie o servidor (`npm run dev`) após alterar o `.env`. O arquivo `.env` é local e está ignorado pelo Git. Não publique nem faça commit de chaves. Como variáveis `VITE_*` são incorporadas ao código enviado ao navegador, a chave **não é secreta**: restrinja-a por referenciador HTTP aos domínios usados (incluindo `localhost:5173` no desenvolvimento) e limite a chave à **YouTube Data API v3** no Google Cloud Console.
+
+Essa chave é usada para pesquisar vídeos e selecionar resultados marcados como incorporáveis; ela não habilita a reprodução de qualquer vídeo. O player de reprodução usa a YouTube IFrame Player API. Vídeos com incorporação bloqueada, indisponíveis na região ou removidos podem falhar; nesses casos, o player apresenta um link para abrir o vídeo diretamente no YouTube.
+
+### Login opcional e playlists pessoais
+
+O PH Music pode ser usado sem conta. No modo convidado, histórico de buscas/reproduções e playlists próprias ficam no armazenamento local do navegador. Para habilitar cadastro e login por e-mail/senha, login Google e sincronização, crie um projeto Supabase, configure estas variáveis no `.env` local e reinicie o Vite:
+
+```env
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua_chave_anon_publica
+```
+
+Execute [`supabase/schema.sql`](./supabase/schema.sql) no SQL Editor do projeto Supabase para criar a tabela de biblioteca e as políticas RLS que restringem cada conta aos próprios dados. No painel do Supabase, habilite os provedores **Email** e **Google** e adicione a URL local/de produção à lista de redirecionamentos permitidos. A chave `anon` é pública no cliente; a proteção dos dados depende das políticas RLS. Nunca coloque a `service_role` key em variáveis `VITE_*` nem no navegador.
+
+#### Estratégia de usuários e armazenamento
+
+- **Identidade e autenticação:** os usuários são criados e autenticados pelo Supabase Auth, usando e-mail/senha ou Google OAuth. O PH Music não mantém nem armazena senhas próprias; recebe do Supabase a sessão e o identificador (`auth.users.id`) da conta.
+- **Modo convidado:** não exige cadastro. Histórico e playlists ficam no `localStorage` do dispositivo, sob a chave `ph-music-library-guest`.
+- **Conta autenticada:** o navegador mantém um cache local por conta (`ph-music-library-user:<userId>`), e a nuvem armazena a biblioteca na tabela `public.user_music_libraries`. Cada linha tem `user_id` como chave estrangeira para `auth.users`, um `payload` JSONB com playlists e históricos, e `updated_at`.
+- **Acesso aos dados:** a tabela tem RLS habilitada; a política permite operações apenas quando `auth.uid() = user_id`. O cliente usa somente a chave pública `anon`, nunca a `service_role`. O esquema é uma biblioteca agregada em JSONB por usuário, não tabelas relacionais separadas para cada faixa ou playlist.
+- **Entrada e sincronização:** ao autenticar, o app combina a biblioteca remota, o cache local daquela conta e a biblioteca convidada. Históricos são unidos por identificador e ordenados por data; playlists com o mesmo ID são combinadas, com faixas sem duplicatas por ID. O resultado fica limitado a 300 reproduções e 100 buscas. Após a sincronização bem-sucedida, o cache de convidado é removido para evitar que dados antigos reapareçam em logins futuros. Se a sincronização falhar, a biblioteca local da conta e a de convidado continuam disponíveis, e o app apresenta um aviso de sincronização.
+
+#### Como são calculadas as listas personalizadas
+
+As três listas são calculadas no cliente a partir dos dados que o próprio usuário gera neste app; não há algoritmo de machine learning, perfilamento externo ou recomendação enviada pela Deezer:
+
+1. **Tocadas recentemente:** ordena as reproduções da mais recente para a mais antiga, remove faixas repetidas e exibe até 30.
+2. **Suas mais ouvidas:** conta as reproduções por ID de faixa, ordena pela contagem decrescente e usa a reprodução mais recente como critério de desempate; exibe até 30.
+3. **Descobertas das suas buscas:** reúne as faixas dos resultados de buscas concluídas, das pesquisas mais recentes para as antigas, elimina IDs repetidos e exibe até 30. O histórico guarda até 100 buscas.
+
+As recomendações são atualizadas conforme o histórico muda. Reproduções realizadas em fontes suportadas pelo player e buscas que retornam faixas são registradas na biblioteca. O login é opcional: as mesmas listas e playlists próprias ficam disponíveis localmente no modo convidado. As playlists podem ser criadas, renomeadas e excluídas, e faixas podem ser adicionadas pelos resultados da busca.
 
 ### Proxy de API
 
@@ -283,8 +328,11 @@ npm run build
 ## Variáveis de Ambiente
 
 ```env
-# .env
-VITE_API_BASE_URL=http://localhost:5173/api
+# .env (arquivo local, não versionar)
+VITE_YOUTUBE_API_KEY=sua_chave_do_youtube
+VITE_API_BASE_URL=/api
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua_chave_anon_publica
 ```
 
 ## Dependências Principais
@@ -328,4 +376,3 @@ MIT
 - [Vite Guide](https://vitejs.dev/guide/)
 - [Material UI Components](https://mui.com/components/)
 - [React Router](https://reactrouter.com/)
-

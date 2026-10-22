@@ -1,6 +1,11 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   TextField,
   Grid,
   Typography,
@@ -8,6 +13,7 @@ import {
   Paper,
   InputAdornment,
   Container,
+  Stack,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { searchArtists, searchTracks, searchAlbums, searchPlaylists, getTrackPreview } from '@/services/deezerApi';
@@ -23,9 +29,12 @@ import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import PersonIcon from '@mui/icons-material/Person';
 import AlbumIcon from '@mui/icons-material/Album';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
+import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
+import { useAccount } from '@/contexts/AccountContext';
 import type { Artist, Track, Album, Playlist } from '@/types';
 
 interface SearchResults {
+  query: string;
   artists: Artist[];
   tracks: Track[];
   albums: Album[];
@@ -34,15 +43,18 @@ interface SearchResults {
 
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [trackToSave, setTrackToSave] = useState<Track | null>(null);
+  const [newPlaylistName, setNewPlaylistName] = useState('');
   const navigate = useNavigate();
   const { currentlyPlaying, playPreview, stopPreview, playYoutube, matchCurrentTrack } = usePlayer();
   const { info, error, success } = useNotification();
+  const { library, recordSearch, createPlaylist, addTrackToPlaylist } = useAccount();
   const debouncedQuery = useDebounce(searchQuery, 500);
 
   // Create search function with cache
   const searchAll = useCallback(async (): Promise<SearchResults> => {
     if (!debouncedQuery.trim()) {
-      return { artists: [], tracks: [], albums: [], playlists: [] };
+      return { query: debouncedQuery, artists: [], tracks: [], albums: [], playlists: [] };
     }
 
     const [
@@ -58,6 +70,7 @@ const Search = () => {
     ]);
 
     return {
+      query: debouncedQuery,
       artists: artistsResponse.data || [],
       tracks: tracksResponse.data || [],
       albums: albumsResponse.data || [],
@@ -66,19 +79,20 @@ const Search = () => {
   }, [debouncedQuery]);
 
   // Use query hook with automatic caching
-  const { data: results, loading } = useQuery<SearchResults>(searchAll, [debouncedQuery], {
+  const { data: results, loading, error: searchError } = useQuery<SearchResults>(searchAll, [debouncedQuery], {
     cacheTime: 10 * 60 * 1000, // 10 minutes cache
     enabled: debouncedQuery.trim().length > 0,
   });
+  const activeResults = results?.query === debouncedQuery ? results : null;
 
   // Compute total results
   const totalResults = useMemo(
     () =>
-      (results?.artists.length || 0) +
-      (results?.tracks.length || 0) +
-      (results?.albums.length || 0) +
-      (results?.playlists.length || 0),
-    [results]
+      (activeResults?.artists.length || 0) +
+      (activeResults?.tracks.length || 0) +
+      (activeResults?.albums.length || 0) +
+      (activeResults?.playlists.length || 0),
+    [activeResults]
   );
 
   const handlePreviewTrack = useCallback(
@@ -130,22 +144,52 @@ const Search = () => {
     [info, error, success, playYoutube]
   );
 
-    const handleOpenSpotify = useCallback(
-      async (track: Track) => {
-        info('Buscando no Spotify...');
-        await matchCurrentTrack();
-        // The matchCurrentTrack will update matchedTrack in context
-        // The actual Spotify playback is handled by the Player component
-        success('Verifique o player para opções do Spotify.');
-      },
-      [info, success, matchCurrentTrack]
-    );
+  const handleOpenSpotify = useCallback(
+    async () => {
+      info('Buscando no Spotify...');
+      await matchCurrentTrack();
+      success('Verifique o player para opções do Spotify.');
+    },
+    [info, success, matchCurrentTrack]
+  );
 
-    useEffect(() => {
-    if (totalResults === 0 && !loading && debouncedQuery.trim()) {
-      info('Nenhum resultado encontrado');
+  const hasPendingSearch = searchQuery.trim() !== debouncedQuery.trim();
+
+  useEffect(() => {
+    if (
+      !loading &&
+      !searchError &&
+      results &&
+      results.query === debouncedQuery &&
+      debouncedQuery.trim()
+    ) {
+      recordSearch(debouncedQuery, results.tracks);
     }
-  }, [totalResults, loading, debouncedQuery, info]);
+  }, [loading, searchError, results, debouncedQuery, recordSearch]);
+
+  const handleSaveTrack = (track: Track) => {
+    setTrackToSave(track);
+    setNewPlaylistName('');
+  };
+
+  const handleAddTrackToPlaylist = (playlistId: string) => {
+    if (!trackToSave) return;
+    addTrackToPlaylist(playlistId, trackToSave);
+    success('Faixa adicionada à playlist.');
+    setTrackToSave(null);
+  };
+
+  const handleCreatePlaylistWithTrack = () => {
+    if (!trackToSave) return;
+    try {
+      const playlistId = createPlaylist(newPlaylistName);
+      addTrackToPlaylist(playlistId, trackToSave);
+      success('Playlist criada e faixa adicionada.');
+      setTrackToSave(null);
+    } catch (caughtError) {
+      error(caughtError instanceof Error ? caughtError.message : 'Não foi possível criar a playlist.');
+    }
+  };
 
   return (
     <Container maxWidth="xl">
@@ -203,7 +247,7 @@ const Search = () => {
           </Box>
         </Paper>
 
-        {loading && searchQuery.trim() ? (
+        {(loading || hasPendingSearch) && searchQuery.trim() ? (
           <Box sx={{ width: '100%', maxWidth: '1200px' }}>
             <Box sx={{ mb: 6 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
@@ -254,7 +298,31 @@ const Search = () => {
                   </Box>
                 ) : searchQuery.trim() ? (
                   <Box sx={{ width: '100%', maxWidth: '1200px' }}>
-                    {results?.artists.length > 0 && (
+                    {searchError ? (
+                      <Typography role="alert" color="error" align="center">
+                        Não foi possível concluir a busca. Tente novamente.
+                      </Typography>
+                    ) : results && totalResults === 0 ? (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: 1,
+                          py: 8,
+                          textAlign: 'center',
+                        }}
+                      >
+                        <SearchIcon sx={{ fontSize: 56, color: 'text.secondary', opacity: 0.6 }} />
+                        <Typography variant="h6" color="text.secondary">
+                          Nenhum resultado encontrado
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Tente buscar por outro artista, música, álbum ou playlist.
+                        </Typography>
+                      </Box>
+                    ) : null}
+                    {!searchError && activeResults && activeResults.artists.length > 0 && (
                       <Box sx={{ mb: 6 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
                           <Box sx={{ position: 'relative' }}>
@@ -276,7 +344,7 @@ const Search = () => {
                           </Typography>
                         </Box>
                         <Grid container spacing={3} justifyContent="center">
-                          {results.artists.map((artist) => (
+                          {activeResults.artists.map((artist) => (
                             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={artist.id}>
                               <ArtistCard artist={artist} onClick={() => navigate(`/artist/${artist.id}`)} />
                             </Grid>
@@ -285,7 +353,7 @@ const Search = () => {
                       </Box>
                     )}
 
-                    {results?.albums.length > 0 && (
+                    {!searchError && activeResults && activeResults.albums.length > 0 && (
                       <Box sx={{ mb: 6 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
                           <Box sx={{ position: 'relative' }}>
@@ -307,7 +375,7 @@ const Search = () => {
                           </Typography>
                         </Box>
                         <Grid container spacing={3} justifyContent="center">
-                          {results.albums.map((album) => (
+                          {activeResults.albums.map((album) => (
                             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={album.id}>
                               <AlbumCard album={album} />
                             </Grid>
@@ -316,7 +384,7 @@ const Search = () => {
                       </Box>
                     )}
 
-                    {results?.playlists.length > 0 && (
+                    {!searchError && activeResults && activeResults.playlists.length > 0 && (
                       <Box sx={{ mb: 6 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
                           <Box sx={{ position: 'relative' }}>
@@ -338,7 +406,7 @@ const Search = () => {
                           </Typography>
                         </Box>
                         <Grid container spacing={3} justifyContent="center">
-                          {results.playlists.map((playlist) => (
+                          {activeResults.playlists.map((playlist) => (
                             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={playlist.id}>
                               <PlaylistCard playlist={playlist} />
                             </Grid>
@@ -347,7 +415,7 @@ const Search = () => {
                       </Box>
                     )}
 
-                    {results?.tracks.length > 0 && (
+                    {!searchError && activeResults && activeResults.tracks.length > 0 && (
                       <Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
                   <MusicNoteIcon sx={{ color: 'primary.main' }} />
@@ -356,13 +424,14 @@ const Search = () => {
                   </Typography>
                 </Box>
                 <Grid container spacing={3} justifyContent="center">
-                  {results.tracks.map((track) => (
+                  {activeResults.tracks.map((track) => (
                     <TrackCard
                       key={track.id}
                       track={track}
                       isPlaying={currentlyPlaying === track.id}
                       onPreview={handlePreviewTrack}
                       onYoutube={handleOpenYoutube}
+                      onAddToPlaylist={handleSaveTrack}
                                   onSpotify={handleOpenSpotify}
                                   hasSpotify={true} // Will be determined by matchCurrentTrack
                                 />
@@ -393,6 +462,49 @@ const Search = () => {
           </Box>
         )}
       </Box>
+      <Dialog
+        open={Boolean(trackToSave)}
+        onClose={() => setTrackToSave(null)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Adicionar à playlist</DialogTitle>
+        <DialogContent>
+          <Stack spacing={1} sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              {trackToSave?.title} — {trackToSave?.artist.name}
+            </Typography>
+            {library.playlists.map((playlist) => (
+              <Button
+                key={playlist.id}
+                variant="outlined"
+                startIcon={<PlaylistAddIcon />}
+                onClick={() => handleAddTrackToPlaylist(playlist.id)}
+                fullWidth
+              >
+                {playlist.name}
+              </Button>
+            ))}
+            {!library.playlists.length && (
+              <Typography variant="body2" color="text.secondary">
+                Você ainda não tem playlists. Crie uma para salvar esta faixa.
+              </Typography>
+            )}
+            <TextField
+              label="Nome da nova playlist"
+              value={newPlaylistName}
+              onChange={(event) => setNewPlaylistName(event.target.value)}
+              fullWidth
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTrackToSave(null)} color="inherit">Cancelar</Button>
+          <Button onClick={handleCreatePlaylistWithTrack} variant="contained">
+            Criar e adicionar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

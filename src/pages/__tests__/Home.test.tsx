@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom';
 import Home from '@/pages/Home';
 import { PlayerProvider } from '@/contexts/PlayerContext';
+import { AccountProvider } from '@/contexts/AccountContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import * as deezerApi from '@/services/deezerApi';
 
@@ -26,9 +27,11 @@ const renderHome = () => {
   return render(
     <BrowserRouter>
       <NotificationProvider>
-        <PlayerProvider>
-          <Home />
-        </PlayerProvider>
+        <AccountProvider>
+          <PlayerProvider>
+            <Home />
+          </PlayerProvider>
+        </AccountProvider>
       </NotificationProvider>
     </BrowserRouter>
   );

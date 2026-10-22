@@ -63,7 +63,9 @@ O PH Music nasceu como um **clone educacional do Deezer** para demonstrar padrõ
 ### 7. Estado e Persistência
 - [x] Favoritos (artistas, álbuns, playlists, faixas) persistidos em **localStorage**
 - [x] Sistema de notificações Toast (success, error, warning, info)
-- [x] Histórico de buscas e fila de reprodução
+- [x] Histórico de até 300 reproduções e 100 buscas, e fila de reprodução
+- [x] Biblioteca pessoal para convidados com armazenamento local e sincronização opcional por conta no Supabase
+- [x] Playlists próprias editáveis e listas inteligentes calculadas a partir das buscas e reproduções
 
 ### 8. UX/Loading States
 - [x] **Skeleton loaders** para cards durante carregamento
@@ -138,7 +140,7 @@ src/
 ```env
 # YouTube Data API v3 Key
 # Get from: https://console.cloud.google.com/apis/credentials
-VITE_YOUTUBE_API_KEY=sua_chave_aqui
+VITE_YOUTUBE_API_KEY=sua_chave_do_youtube
 
 # Spotify API Credentials
 # Get from: https://developer.spotify.com/dashboard/
@@ -150,7 +152,45 @@ VITE_SPOTIFY_REDIRECT_URI=http://localhost:5173/callback
 
 # Deezer API (already works via Vite proxy)
 VITE_API_BASE_URL=/api
+
+# Login opcional e sincronização de biblioteca via Supabase
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua_chave_anon_publica
 ```
+
+O arquivo `.env` deve ficar na raiz do projeto, é local e está ignorado pelo Git. Nunca faça commit nem compartilhe a chave. Como `VITE_*` é substituído durante o build e fica acessível no navegador, essa chave não pode ser considerada secreta. No Google Cloud Console, habilite a **YouTube Data API v3**, limite a chave a essa API e aplique restrições de referenciador HTTP para os domínios permitidos (por exemplo, `localhost:5173` durante o desenvolvimento). Depois de alterar o `.env`, reinicie o servidor Vite.
+
+**Atenção:** a chave da Data API é usada para buscar vídeos; não é necessária para carregar a YouTube IFrame Player API. O player escolhe resultados marcados como incorporáveis, mas o proprietário do vídeo, a região ou o próprio YouTube ainda podem impedir reprodução em iframe. Quando isso ocorrer, a interface oferece a opção de abrir o vídeo diretamente no YouTube.
+
+### Login opcional e biblioteca pessoal
+
+O uso do app e a reprodução continuam disponíveis sem autenticação. No modo convidado, o histórico de buscas e reproduções e as playlists criadas ficam no `localStorage` do navegador. Ao entrar, o app mescla os dados locais à biblioteca da conta e sincroniza a biblioteca com o Supabase.
+
+1. Crie um projeto no [Supabase](https://supabase.com/dashboard) e adicione `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` ao `.env` local.
+2. No SQL Editor do projeto, execute [`supabase/schema.sql`](./supabase/schema.sql). A tabela usa Row Level Security (RLS) para que cada usuário só possa ler e alterar a própria biblioteca.
+3. Ative os provedores **Email** e **Google** em Authentication → Providers. Para Google, configure as credenciais OAuth no Google Cloud e no painel do Supabase.
+4. Em Authentication → URL Configuration, autorize a URL de desenvolvimento e a URL de produção como redirecionamentos.
+5. Reinicie `npm run dev` depois de alterar o `.env`.
+
+O menu **Minhas listas** inclui as listas inteligentes **Tocadas recentemente**, **Suas mais ouvidas** e **Descobertas das suas buscas**, além de playlists próprias. Na busca, use o botão de adicionar faixa para incluir resultados em uma playlist ou criar uma nova. As variáveis `VITE_*` ficam disponíveis no navegador: a anon key do Supabase é feita para uso público com RLS habilitado; nunca use a chave `service_role` no frontend.
+
+#### Estratégia de usuários e armazenamento
+
+- **Identidade:** o Supabase Auth gerencia as contas, a autenticação por e-mail/senha e o OAuth com Google. O aplicativo não armazena senhas; utiliza a sessão e o UUID do usuário fornecidos pelo Supabase (`auth.users.id`).
+- **Convidado:** sem login, a biblioteca persiste no `localStorage` do navegador, em `ph-music-library-guest`. O uso e a reprodução continuam disponíveis sem conta.
+- **Conta:** existe um cache local isolado por usuário, `ph-music-library-user:<userId>`, e uma linha de nuvem na tabela `public.user_music_libraries`. O campo `user_id` referencia `auth.users.id`; `payload` guarda, em JSONB, playlists próprias, histórico de reprodução e histórico de buscas; `updated_at` registra a última atualização.
+- **Segurança:** o SQL habilita Row Level Security (RLS) e limita cada operação a `auth.uid() = user_id`. O frontend utiliza a chave pública `anon`, protegida por RLS. A chave `service_role` não deve ser inserida em variáveis `VITE_*` nem enviada ao navegador. Como o payload é um documento JSONB por conta, ele não cria registros relacionais individuais para cada faixa.
+- **Mesclagem:** ao entrar, o app combina a biblioteca remota com o cache da conta e os dados do convidado. Entradas de histórico são unidas por ID e ordenadas pela data; playlists com IDs iguais são combinadas e faixas duplicadas são removidas por ID. O histórico é limitado aos 300 itens de reprodução e 100 buscas mais recentes. Depois de sincronizar com sucesso, o cache de convidado é apagado para não reaplicar dados antigos em um login futuro. Se a nuvem falhar, os dados locais continuam acessíveis e é exibido um aviso.
+
+#### Lógica das recomendações personalizadas
+
+As listas inteligentes são calculadas localmente pelo app a partir de buscas concluídas e reproduções do próprio usuário. Não é usado machine learning nem um serviço externo de recomendação:
+
+1. **Tocadas recentemente:** faixas únicas, ordenadas da reprodução mais recente para a mais antiga; até 30 itens.
+2. **Suas mais ouvidas:** contagem de reproduções por faixa, em ordem decrescente; em empate, a faixa ouvida mais recentemente vem primeiro. Até 30 itens.
+3. **Descobertas das suas buscas:** faixas dos resultados de buscas recentes para antigas, sem repetir IDs; até 30 itens, a partir de um histórico de no máximo 100 buscas.
+
+As listas são recalculadas quando o histórico muda. Os resultados de buscas por faixas e as reproduções feitas pelo player alimentam esse histórico. Em **Minhas listas**, também é possível criar, renomear e excluir playlists próprias, além de adicionar faixas a elas pela busca. Tanto o modo convidado quanto o modo autenticado oferecem esses recursos; a conta permite sincronizar a biblioteca entre sessões/dispositivos.
 
 ### Configuração no Spotify Dashboard
 1. Acesse https://developer.spotify.com/dashboard/
@@ -195,7 +235,7 @@ npm run lint
 
 ### 2. Reprodução
 - **Deezer (padrão)**: Clique no ícone ▶️ no card → toca preview 30s
-- **YouTube**: Clique no ícone ▶️ YouTube no card ou player → toca completa
+- **YouTube**: Clique no ícone do YouTube em uma faixa → o app busca um vídeo incorporável usando a chave `VITE_YOUTUBE_API_KEY` e o reproduz no player IFrame. O player é montado após a seleção do vídeo e sincroniza play/pause, volume, progresso e seek. Se a incorporação for bloqueada, use **Abrir no YouTube**.
 - **Spotify**: 
   1. Clique "Conectar Spotify" na navbar
   2. Autorize no Spotify
